@@ -141,7 +141,7 @@ selection.
 - Alert `--limit`: integer 1–100, default 25.
 - `--max-walk-m`: integer 0–20,000.
 - `--radius-m`: integer 1–5,000; accepted only with `--near`, default 1,000.
-- `DURATION`: positive ASCII integer followed by `ms`, `s`, or `m`; no spaces,
+- `DURATION`: positive ASCII integer followed by `ms`, `s`, `m`, or `h`; no spaces,
   fractions, or mixed units. Departure `--window` is 1m–24h, default 2h.
 - All public datetimes are RFC 3339 with an explicit numeric offset or `Z`.
   Naive local timestamps are rejected. Output timestamps are RFC 3339 with the
