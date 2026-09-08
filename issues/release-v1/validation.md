@@ -26,3 +26,9 @@ The primary agent exercised the merged foundation binary with a temporary empty 
 ## Independent Linux source-package validation
 
 The primary agent exported only tracked files from commit `6d50821` into a disposable source tree, without `.git`, `.env` or ignored files. In an existing Linux ARM64 Podman VM, official image `docker.io/library/rust:1.88-bookworm` (digest `sha256:8aa70d1416cf5b1cff4b95ec6c57f1c5e4e649a3b53d616a26695cda6fbb46bc`) ran `cargo test --locked --workspace` successfully: all 30 Rust tests passed. The container was removed afterward; no host toolchain was installed or changed. This validates the declared MSRV on Linux ARM64 and source-archive behavior. It does not claim musl release artifacts, Linux x86_64 execution, or GitHub CI success. The existing VM also exposes x86_64 binfmt support, which may support later explicit emulated artifact smoke tests if needed.
+
+## Landed provider-client verification
+
+The primary agent independently ran all five repository gates on main commit `36165ca`: formatting, strict Clippy, all 44 Rust tests, 21 credential-free provider fixtures, and issue metadata validation passed. The same tracked source snapshot, exported without Git metadata or ignored files, passed all 44 tests in the existing Linux ARM64 container with Rust 1.88. The container was removed afterward. This extends MSRV/source-archive evidence through the real HTTP provider layer; it is still not a musl release artifact or hosted CI claim. Main was pushed to the private GitHub repository.
+
+A local redacted Gitleaks scan of the 39 commits preceding the client landing found no leaks. The final release must repeat the scan after remaining implementation lands.
