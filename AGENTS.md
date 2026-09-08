@@ -36,8 +36,8 @@ the environment; never print credentials or store them in arguments or fixtures.
 
 This is a library and CLI project with no service deployment step. The current
 authorized work includes CLI design, implementation, onboarding, documentation,
-and OSS release preparation. Keep the GitHub repository private; changing its
-visibility is reserved for the maintainer. Release readiness must be supported by
+and OSS release preparation. The maintainer has authorized public GitHub visibility and the v1.0.0 release
+on crates.io, GitHub Releases, and the project Homebrew tap. Release readiness must be supported by
 working installation and smoke tests, not only the presence of release documents.
 
 ### Review judgment

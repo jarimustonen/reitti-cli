@@ -354,10 +354,10 @@ pub fn doctor(
         Ok(config) => {
             let bundled_text = format!(
                 "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
-                include_str!("../../../README.md"),
-                include_str!("../../../CONTRIBUTING.md"),
-                include_str!("../../../SECURITY.md"),
-                include_str!("../../../LICENSE"),
+                include_str!("../README.md"),
+                include_str!("../CONTRIBUTING.md"),
+                include_str!("../SECURITY.md"),
+                include_str!("../LICENSE"),
                 std::str::from_utf8(crate::skill::RESOURCES[0].bytes).unwrap_or(""),
                 std::str::from_utf8(crate::skill::RESOURCES[1].bytes).unwrap_or(""),
                 env!("CARGO_PKG_NAME"),

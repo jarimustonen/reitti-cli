@@ -9,52 +9,47 @@ It covers the HSL Journey Planner service area: Helsinki, Espoo, Vantaa, Kauniai
 - [Installation](#installation)
 - [API key and first run](#api-key-and-first-run)
 - [Examples](#examples)
-- [Configuration](#configuration)
+- [Configuration](#configuration) · [Full configuration reference](docs/configuration.md)
 - [Agent skill](#agent-skill)
 - [Limits and interpretation](#limits-and-interpretation)
 - [Privacy and data sources](#privacy-and-data-sources)
 
 ## Installation
 
-### Shell installer
+### crates.io
 
-After the v1.0.0 assets are published on GitHub Releases, the generated installer selects the supported archive for the current machine:
+Install with Rust 1.88 or newer:
+
+```sh
+cargo install --locked reitti-cli
+```
+
+The package is [`reitti-cli`](https://crates.io/crates/reitti-cli); the installed command is `reitti`.
+
+### Homebrew
+
+```sh
+brew install jarimustonen/reitti/reitti-cli
+```
+
+The [Homebrew tap](https://github.com/jarimustonen/homebrew-reitti) installs a prebuilt binary on macOS arm64 and Linux arm64/x86_64.
+
+### Shell installer and archives
 
 ```sh
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/jarimustonen/reitti-cli/releases/latest/download/reitti-cli-installer.sh | sh
 ```
 
-Review a downloaded installer before executing it if that is your normal security policy. The command requires published, accessible release assets.
-
-### Prebuilt archives
-
-The release plan produces checksum-protected archives for:
-
-- macOS arm64: `reitti-cli-aarch64-apple-darwin.tar.xz`
-- Linux arm64 (static musl): `reitti-cli-aarch64-unknown-linux-musl.tar.xz`
-- Linux x86_64 (static musl): `reitti-cli-x86_64-unknown-linux-musl.tar.xz`
-
-Each archive has a matching `.sha256` file, and the release includes `sha256.sum`. Verify the checksum before installing `reitti` from an archive. Other architectures and operating systems are unsupported in v1.
+[GitHub Releases](https://github.com/jarimustonen/reitti-cli/releases) also provides archives for macOS arm64 and Linux arm64/x86_64 (static musl). Each archive has a matching `.sha256` file; releases also include `sha256.sum`. Verify the checksum before installing an archive. Other architectures and operating systems are unsupported in v1.
 
 ### Build from source
-
-Rust 1.88 or newer is required. Once the v1.0.0 tag exists, install that exact source revision with Cargo:
-
-```sh
-cargo install --locked --git https://github.com/jarimustonen/reitti-cli \
-  --tag v1.0.0 reitti-cli
-```
-
-Before a tag exists, install from an authenticated checkout:
 
 ```sh
 git clone https://github.com/jarimustonen/reitti-cli
 cd reitti-cli
 cargo install --locked --path crates/reitti-cli
 ```
-
-The project is not published to crates.io or Homebrew.
 
 ## API key and first run
 
@@ -78,6 +73,15 @@ reitti doctor --online
 `doctor` is read-only. Offline mode validates configuration, credential presence, bundled-skill synchronization, build provenance, and configured private markers without contacting Digitransit. `--online` adds bounded geocoding and routing probes.
 
 ## Examples
+
+The installed CLI's `--help` is the authoritative reference for commands and flags. Each command supports it, and `schema` describes the JSON responses. These commands work without an API key:
+
+```sh
+reitti --help
+reitti journey list --help
+reitti --json schema list
+reitti --json schema show journey-list
+```
 
 Use `--json` for schema-versioned output. Times must be RFC 3339 with `Z` or an explicit offset; coordinates use `LAT,LON` without whitespace.
 
@@ -112,13 +116,7 @@ reitti --json departure list --stop HSL:1020453 --window 2h --limit 10
 reitti --json alert list --route HSL:31M1 --stop HSL:1020453 --limit 25
 ```
 
-Add `--include-geometry` to a journey request when GeoJSON route lines are needed. Discover exact flags and response schemas without credentials:
-
-```sh
-reitti journey list --help
-reitti --json schema list
-reitti --json schema show journey-list
-```
+Add `--include-geometry` to a journey request when GeoJSON route lines are needed.
 
 ## Configuration
 
@@ -165,7 +163,7 @@ Installation is non-interactive and does not clobber a differing existing tree. 
 - Results are bounded and may be incomplete. Comparison labels such as `fastest` apply only to alternatives in that response.
 - `--wheelchair` asks the router for wheelchair-aware results but cannot prove every part of a trip is accessible. Preserve `unknown` accessibility evidence.
 - `--max-walk-m` filters only the bounded alternatives already returned by Digitransit. No local match does not prove that no suitable route exists.
-- Realtime status is explicit evidence. When realtime data is absent, scheduled times remain available and are labelled accordingly; equal scheduled and actual times alone do not prove an update.
+- Times are labelled to distinguish timetable data from realtime updates. When no realtime update is available, the CLI shows the scheduled time. Matching scheduled and reported times alone do not mean a realtime update was received.
 - Navigation can be incomplete or truncated. GeoJSON coordinates are `[longitude, latitude]`, unlike CLI input coordinates.
 - An empty alert list does not guarantee normal service.
 

@@ -1,11 +1,11 @@
 # Distribution operations
 
-This document describes the prepared v1 binary channel. It does not authorize a tag, visibility change, or publication.
+Releases publish `reitti-core` and `reitti-cli` to crates.io, prebuilt binaries to GitHub Releases, and formula `reitti-cli` to `jarimustonen/homebrew-reitti`. The CLI crate pins its core dependency to the same version; publish core first and wait for registry visibility before publishing the CLI.
 
 <!-- shipshape-dist:managed:start -->
 ## Generated release channel
 
-`dist-workspace.toml` and `.github/workflows/release.yml` are generated from the approved `OSS-RELEASE.md` distribution contract. Refresh the configuration with `shipshape dist generate`, reapply the maintainer-required macOS runner override if the generator omits it, and regenerate the workflow with the pinned cargo-dist. Never hand-edit `release.yml`.
+`dist-workspace.toml` and `.github/workflows/release.yml` are generated from the approved `OSS-RELEASE.md` distribution contract. Refresh the configuration with `shipshape dist generate`, retain the Homebrew installer, tap and publish-job settings plus the maintainer-required macOS runner override if the shipshape generator omits them, and regenerate the workflow with the pinned cargo-dist. Never hand-edit `release.yml`.
 
 The repository pins cargo-dist 0.28.2. Its release plan creates:
 
@@ -53,7 +53,7 @@ This is an operator build recipe, not a global Cargo configuration recommendatio
 After changing `distribution` in `OSS-RELEASE.md`:
 
 1. run `shipshape dist generate --require-approved` with the checksum-verified pinned cargo-dist on `PATH`;
-2. retain `[dist.github-custom-runners]` with `aarch64-apple-darwin = "self-hosted"`;
+2. retain `installers = ["shell", "homebrew"]`, `tap = "jarimustonen/homebrew-reitti"`, `publish-jobs = ["homebrew"]`, `github-build-setup = "../build-setup.yml"`, and `[dist.github-custom-runners]` with `aarch64-apple-darwin = "self-hosted"`;
 3. run cargo-dist `generate` again and verify there is no generated diff on a second run;
 4. inspect `dist plan --output-format=json` and read artifact paths from its JSON (`target/distrib` in cargo-dist 0.28.2);
 5. verify all three target archives, the shell installer, aggregate and per-file checksums, source archive, and exact build commit;
@@ -65,4 +65,4 @@ GitHub artifact attestations remain configured as the contract's desired keyless
 
 ## Release boundary
 
-The repository remains private until the maintainer changes visibility. Release preparation does not itself authorize a tag, GitHub Release, crates.io or Homebrew publication, or billing and security setting changes. Ordinary push and pull-request CI is intentionally absent by maintainer decision and must not be regenerated merely to satisfy an audit. The generated tag-triggered cargo-dist workflow remains the release path; local checks are not a substitute for a successful release run.
+The maintainer authorized public visibility and the first v1.0.0 publication. Future releases require an explicit maintainer instruction. Release preparation alone does not authorize publication or billing changes. Ordinary push and pull-request CI is intentionally absent by maintainer decision and must not be regenerated merely to satisfy an audit. The generated tag-triggered cargo-dist workflow remains the release path; local checks are not a substitute for a successful release run.

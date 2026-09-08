@@ -5,11 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- oss-changelog:unreleased-start -->
-## [Unreleased]
+## [1.0.0] - 2026-09-08
 
-The entries below describe the intended first stable release, v1.0.0. They remain unreleased until the maintainer completes acceptance and creates the tag and GitHub Release.
+First stable release.
 
 ### Added
+
+- Installation through crates.io (`cargo install --locked reitti-cli`) and the project Homebrew tap.
 
 - Place discovery and conservative free-text resolution for ambiguous journey endpoints.
 - Named and nearby stop search for the HSL Journey Planner service area.

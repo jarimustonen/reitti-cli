@@ -42,3 +42,7 @@ Use the existing self-hosted macOS ARM64 machine used by the other family projec
 ### Maintainer steering: ordinary GitHub CI
 
 Ordinary push and pull-request GitHub CI is intentionally absent. Remove the broken contribution workflow, run required validation and secret scanning locally, and do not regenerate ordinary CI merely to satisfy an audit. Preserve the generated tag-triggered cargo-dist release workflow and its self-hosted macOS ARM64 runner override.
+
+### Maintainer authorization: public v1.0.0 publication
+
+On 2026-09-08 the maintainer explicitly requested README refinements, crates.io and Homebrew as the first installation channels, Code of Conduct removal, public GitHub visibility, and publication. This supersedes the earlier private-preparation boundary. Publish core then CLI to crates.io; cargo-dist owns GitHub assets and the Homebrew formula so the formula correctly installs binary `reitti` from `reitti-cli` archives. Preserve the three platforms, macOS self-hosted runner, local gates, and absence of ordinary CI. Use existing SOPS-managed release credentials only through process environment or GitHub secret input; never persist decrypted values.

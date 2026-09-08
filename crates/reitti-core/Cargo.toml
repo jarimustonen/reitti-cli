@@ -8,7 +8,8 @@ rust-version.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "Pure domain model and provider interfaces for reitti-cli"
-publish = false
+publish = ["crates-io"]
+readme = "README.md"
 
 [dependencies]
 chrono.workspace = true

@@ -4,11 +4,15 @@ status: approved
 maturity: mvp
 ecosystems: [rust]
 targets:
+  - {ecosystem: rust, package: reitti-core, registry: crates.io, adapter: cargo-publish}
+  - {ecosystem: rust, package: reitti-cli, registry: crates.io, adapter: cargo-publish}
+  - {ecosystem: rust, package: reitti-cli, registry: homebrew, adapter: cargo-dist}
   - {ecosystem: rust, package: reitti-cli, registry: gh-releases, adapter: cargo-dist}
 distribution:
   adapter: cargo-dist
   gh_releases: true
-  installers: [shell]
+  installers: [shell, homebrew]
+  homebrew_tap: jarimustonen/homebrew-reitti
   platforms:
     - aarch64-apple-darwin
     - aarch64-unknown-linux-musl
@@ -31,7 +35,7 @@ docs_site: none
 
 - **Maturity: MVP** — the implemented CLI, deterministic local tests, and release infrastructure support a first stable release while keeping policy proportionate to a single-maintainer project.
 - **Ecosystem: Rust** — the workspace contains `reitti-core` and the `reitti` binary package (`reitti-cli`).
-- **Release target: `reitti-cli` on GitHub Releases** — no crates.io package is published. Source installation remains possible from the repository, while cargo-dist owns the future binary release target.
+- **Release targets** — publish `reitti-core` then `reitti-cli` to crates.io, retain `reitti-cli` GitHub Release archive names, and distribute command `reitti` through `jarimustonen/homebrew-reitti`. The maintainer explicitly authorized these channels and public repository visibility on 2026-09-08.
 - **Distribution: cargo-dist via GitHub Releases** — future releases provide binaries for macOS arm64 and Linux arm64/x86_64 plus a shell installer. Intel macOS and Windows are intentionally unsupported.
 - **Versioning and release: SemVer, gated, single** — the first intended stable release is v1.0. A maintainer explicitly initiates every release; this contract does not authorize automatic publication.
 - **Changelog: curated from issuectl trailers** — maintainers select user-facing entries from the repository's issue-linked commits.
@@ -42,7 +46,7 @@ docs_site: none
 ## Release notes
 
 - Repository visibility remains the maintainer's decision. This contract does not change GitHub settings.
-- Do not create tags, GitHub releases, or public registry entries during preparation.
+- The maintainer authorized the first v1.0.0 publication after final README and packaging checks. Subsequent releases require their own maintainer instruction.
 - A v1.0 cut requires the generated cargo-dist configuration and tag-triggered release workflow, final release notes, clean-machine installation, three-platform artifact smoke tests, authenticated provider acceptance, and inspection of the actual release-workflow result.
 - Do not regenerate ordinary push or pull-request CI merely to satisfy a release-readiness audit. The required merge gates and secret scan run locally; the generated cargo-dist release workflow remains.
 - GitHub Release assets and pushed tags are durable release actions; review the release plan before cutting them.

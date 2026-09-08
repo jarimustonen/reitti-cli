@@ -65,7 +65,3 @@ Keep unrelated changes in separate pull requests. Update user-facing documentati
 ## Licensing
 
 By contributing, you agree that your contribution is licensed under the project's [MIT License](LICENSE).
-
-## Code of conduct
-
-All contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).

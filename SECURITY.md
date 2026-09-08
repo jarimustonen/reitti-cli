@@ -4,21 +4,7 @@
 
 Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.
 
-The repository is currently private. A direct check of GitHub's Private Vulnerability Reporting endpoint returned 404 in that state, so this document does not claim that a private reporting form is available. Authorized collaborators should contact a repository administrator through an existing private collaboration channel. Do not place sensitive details in an ordinary issue.
-
-When the repository becomes public, a maintainer should enable and verify GitHub Private Vulnerability Reporting under **Settings → Code security** before announcing the public release. Once the repository's **Security** tab shows **Report a vulnerability**, use that form. GitHub documents the process in [Privately reporting a security vulnerability](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
-
-If the expected private form is unavailable after publicization, use GitHub's repository-owner contact or abuse-reporting channels to request a private route without posting vulnerability details publicly. The project does not invent or publish a personal security address for this purpose.
-
-Include, as far as you can:
-
-- the affected version or commit;
-- the affected command or component;
-- reproduction steps or a proof of concept;
-- the impact you observed; and
-- any suggested mitigation.
-
-The maintainers will acknowledge the report as soon as practical, assess it, and keep you informed of material progress. Please allow a reasonable period for a fix before public disclosure. Credit will be given unless you prefer to remain anonymous.
+Report sensitive vulnerabilities through [GitHub Private Vulnerability Reporting](https://github.com/jarimustonen/reitti-cli/security/advisories/new). Do not include sensitive details in an ordinary issue. If the private reporting form is unavailable, contact the repository owner through an existing private channel to arrange a report.
 
 ## Scope
 
@@ -47,7 +33,7 @@ Never copy an unredacted finding into an issue, pull request, transcript, or log
 
 ## Supported versions
 
-No GitHub Release has been published yet. After v1.0.0 is released, the latest release will receive security fixes. This section will be updated if support expands to additional release lines.
+The latest 1.x release receives security fixes. Update to the latest release before reporting an issue that may already be fixed.
 
 ## Safe harbor
 
