@@ -133,18 +133,24 @@ mod tests {
     }
 
     #[test]
-    fn real_workspace_tracks_head_and_packed_refs() {
+    fn real_workspace_reports_available_source_provenance() {
         let workspace = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let stamp = discover(&workspace).unwrap();
-        assert!(stamp.commit.is_some());
-        assert!(stamp
-            .tracked_paths
-            .iter()
-            .any(|path| path.ends_with("HEAD")));
-        assert!(stamp
-            .tracked_paths
-            .iter()
-            .any(|path| path.ends_with("packed-refs")));
+        if stamp.kind == "git" {
+            assert!(stamp.commit.is_some());
+            assert!(stamp
+                .tracked_paths
+                .iter()
+                .any(|path| path.ends_with("HEAD")));
+            assert!(stamp
+                .tracked_paths
+                .iter()
+                .any(|path| path.ends_with("packed-refs")));
+        } else {
+            assert_eq!(stamp.kind, "tarball");
+            assert_eq!(stamp.commit, None);
+            assert!(stamp.tracked_paths.is_empty());
+        }
     }
 
     fn run(directory: &Path, args: &[&str]) {

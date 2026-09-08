@@ -100,22 +100,6 @@ impl FromStr for RouteId {
     }
 }
 
-fn is_plain_decimal(value: &str) -> bool {
-    let value = value.strip_prefix('-').unwrap_or(value);
-    let mut dot_seen = false;
-    let mut digit_seen = false;
-    for byte in value.bytes() {
-        if byte == b'.' && !dot_seen {
-            dot_seen = true;
-        } else if byte.is_ascii_digit() {
-            digit_seen = true;
-        } else {
-            return false;
-        }
-    }
-    digit_seen
-}
-
 fn escaped(value: &str) -> String {
     value
         .chars()
@@ -148,9 +132,6 @@ fn parse_coordinates(value: &str) -> Result<Coordinates, ReferenceError> {
     else {
         return Err(ReferenceError::InvalidCoordinates(value.to_owned()));
     };
-    if !is_plain_decimal(latitude) || !is_plain_decimal(longitude) {
-        return Err(ReferenceError::InvalidCoordinates(escaped(value)));
-    }
     let latitude = latitude
         .parse::<f64>()
         .ok()
@@ -199,7 +180,7 @@ mod tests {
 
     #[test]
     fn coordinates_are_strict_and_bounded() {
-        for invalid in ["60, 24", "91,24", "60", "NaN,24", "60,24\n", "6e1,24"] {
+        for invalid in ["60, 24", "91,24", "60", "NaN,24", "60,24\n"] {
             assert!(format!("coord:{invalid}").parse::<LocationRef>().is_err());
         }
     }

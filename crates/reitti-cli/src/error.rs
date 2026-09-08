@@ -32,6 +32,11 @@ impl AppError {
         }
     }
 
+    pub fn with_detail(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
+        self.details.insert(key.into(), value.into());
+        self
+    }
+
     pub fn invalid(
         code: &'static str,
         message: impl Into<String>,

@@ -1,6 +1,10 @@
 use std::{
+    ffi::OsString,
     fs,
-    os::unix::fs::{symlink, PermissionsExt},
+    os::unix::{
+        ffi::OsStringExt,
+        fs::{symlink, PermissionsExt},
+    },
     path::Path,
     process::Command,
 };
@@ -44,15 +48,53 @@ fn equivalent_version_spellings_are_byte_identical() {
         assert!(output.status.success());
         assert!(output.stderr.is_empty());
         let value: Value = serde_json::from_slice(&output.stdout).unwrap();
-        let commit = value["data"]["commit"].as_str().unwrap();
-        assert_eq!(commit.len(), 40);
-        assert!(commit.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        match value["data"]["commit"].as_str() {
+            Some(commit) => {
+                assert_eq!(commit.len(), 40);
+                assert!(commit.bytes().all(|byte| byte.is_ascii_hexdigit()));
+                assert!(matches!(
+                    value["data"]["build_provenance"]["kind"].as_str(),
+                    Some("git" | "ci-injected")
+                ));
+            }
+            None => assert!(matches!(
+                value["data"]["build_provenance"]["kind"].as_str(),
+                Some("tarball" | "vendored")
+            )),
+        }
         assert_eq!(value["data"]["skills"], serde_json::json!([]));
     }
     for output in &outputs[1..] {
         assert_eq!(output.stdout, outputs[0].stdout);
         assert_eq!(output.stderr, outputs[0].stderr);
     }
+
+    let alias_path = home.path().join("alias.json");
+    let command_path = home.path().join("command.json");
+    let alias = run(
+        home.path(),
+        &[
+            "--version",
+            "--json",
+            "--output",
+            alias_path.to_str().unwrap(),
+        ],
+    );
+    let command = run(
+        home.path(),
+        &[
+            "version",
+            "--json",
+            "--output",
+            command_path.to_str().unwrap(),
+        ],
+    );
+    assert!(alias.status.success());
+    assert!(command.status.success());
+    assert_eq!(
+        fs::read(alias_path).unwrap(),
+        fs::read(command_path).unwrap()
+    );
 }
 
 #[test]
@@ -117,6 +159,53 @@ fn structured_help_uses_validated_path_and_exposes_hidden_test_clock() {
         .iter()
         .any(|flag| flag["name"] == "--frozen-time" && flag["hidden"] == true));
 
+    let schema_help = run(home.path(), &["schema", "show", "--help", "--json"]);
+    assert!(schema_help.status.success());
+    let schema_help: Value = serde_json::from_slice(&schema_help.stdout).unwrap();
+    assert_eq!(schema_help["data"]["args"][0]["name"], "name");
+    assert_eq!(
+        schema_help["data"]["examples"][0]["argv"],
+        serde_json::json!(["reitti", "--json", "schema", "show", "journey-list"])
+    );
+
+    let config_help = run(home.path(), &["config", "update", "--help", "--json"]);
+    assert!(config_help.status.success());
+    let config_help: Value = serde_json::from_slice(&config_help.stdout).unwrap();
+    let names = config_help["data"]["flags"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|flag| flag["name"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        names
+            .iter()
+            .filter(|name| **name == "--routing-url")
+            .count(),
+        1
+    );
+    assert!(names.contains(&"--set-routing-url"));
+    assert!(config_help["data"]["examples"][0]["argv"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|part| part == "--dry-run"));
+
+    let text_help = run(home.path(), &["departure", "list", "--help"]);
+    assert!(text_help.status.success());
+    let text_help = String::from_utf8(text_help.stdout).unwrap();
+    assert!(text_help.contains("Example:"));
+    assert!(text_help.contains("reitti --json departure list --stop HSL:1020453"));
+
+    let help_file = home.path().join("help.json");
+    let file_output = run(
+        home.path(),
+        &["--help", "--json", "--output", help_file.to_str().unwrap()],
+    );
+    assert!(file_output.status.success());
+    let saved: Value = serde_json::from_slice(&fs::read(help_file).unwrap()).unwrap();
+    assert_eq!(saved["data"]["path"], serde_json::json!([]));
+
     let invalid = run(home.path(), &["unknown", "--help", "--json"]);
     assert_eq!(invalid.status.code(), Some(1));
     let error: Value = serde_json::from_slice(&invalid.stderr).unwrap();
@@ -171,6 +260,26 @@ fn config_show_redacts_and_resolves_each_key_independently() {
     assert_eq!(value["data"]["values"]["subscription_key"]["source"], "env");
     assert_eq!(value["data"]["values"]["language"]["value"], "sv");
     assert_eq!(value["data"]["values"]["routing_url"]["source"], "flag");
+}
+
+#[test]
+fn non_unicode_config_environment_is_rejected_without_fallback() {
+    let home = TempDir::new().unwrap();
+    let output = reitti(home.path())
+        .env(
+            "REITTI_LANGUAGE",
+            OsString::from_vec(vec![b'f', b'i', 0xff]),
+        )
+        .args(["--json", "config", "show"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    let error: Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(error["error"]["code"], "invalid_env");
+    assert!(error["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("value is redacted"));
 }
 
 #[test]
@@ -360,24 +469,117 @@ fn held_or_non_regular_config_lock_fails_without_waiting() {
 #[test]
 fn runtime_overrides_never_become_persistent_updates() {
     let home = TempDir::new().unwrap();
-    let global_only = run(home.path(), &[
-        "--json", "--routing-url", "https://runtime.example/routing",
-        "--request-timeout", "9s", "config", "update", "--language", "fi", "--dry-run",
-    ]);
-    assert!(global_only.status.success(), "{}", String::from_utf8_lossy(&global_only.stderr));
+    let global_only = run(
+        home.path(),
+        &[
+            "--json",
+            "--routing-url",
+            "https://runtime.example/routing",
+            "--request-timeout",
+            "9s",
+            "config",
+            "update",
+            "--language",
+            "fi",
+            "--dry-run",
+        ],
+    );
+    assert!(
+        global_only.status.success(),
+        "{}",
+        String::from_utf8_lossy(&global_only.stderr)
+    );
     let plan: Value = serde_json::from_slice(&global_only.stdout).unwrap();
-    let keys = plan["data"]["would"].as_array().unwrap().iter().map(|item| item["input"]["key"].as_str().unwrap()).collect::<Vec<_>>();
+    let keys = plan["data"]["would"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|item| item["input"]["key"].as_str().unwrap())
+        .collect::<Vec<_>>();
     assert_eq!(keys, vec!["language"]);
 
-    let persistent = run(home.path(), &[
-        "--json", "config", "update", "--set-routing-url", "https://saved.example/routing",
-        "--set-request-timeout", "8s", "--dry-run",
-    ]);
-    assert!(persistent.status.success(), "{}", String::from_utf8_lossy(&persistent.stderr));
+    let globals_after_subcommand = run(
+        home.path(),
+        &[
+            "config",
+            "update",
+            "--language",
+            "sv",
+            "--dry-run",
+            "--routing-url",
+            "https://runtime.example/after",
+            "--connect-timeout",
+            "7s",
+            "--json",
+        ],
+    );
+    assert!(
+        globals_after_subcommand.status.success(),
+        "{}",
+        String::from_utf8_lossy(&globals_after_subcommand.stderr)
+    );
+    let after_plan: Value = serde_json::from_slice(&globals_after_subcommand.stdout).unwrap();
+    assert_eq!(after_plan["data"]["would"][0]["input"]["key"], "language");
+    assert_eq!(after_plan["data"]["would"].as_array().unwrap().len(), 1);
+
+    let persistent = run(
+        home.path(),
+        &[
+            "--json",
+            "config",
+            "update",
+            "--set-routing-url",
+            "https://saved.example/routing",
+            "--set-request-timeout",
+            "8s",
+            "--dry-run",
+        ],
+    );
+    assert!(
+        persistent.status.success(),
+        "{}",
+        String::from_utf8_lossy(&persistent.stderr)
+    );
     let plan: Value = serde_json::from_slice(&persistent.stdout).unwrap();
-    let keys = plan["data"]["would"].as_array().unwrap().iter().map(|item| item["input"]["key"].as_str().unwrap()).collect::<Vec<_>>();
+    let keys = plan["data"]["would"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|item| item["input"]["key"].as_str().unwrap())
+        .collect::<Vec<_>>();
     assert_eq!(keys, vec!["routing_url", "request_timeout"]);
-    assert_eq!(plan["data"]["would"][0]["input"]["value"], "https://saved.example/routing");
+    assert_eq!(
+        plan["data"]["would"][0]["input"]["value"],
+        "https://saved.example/routing"
+    );
+
+    let applied = run(
+        home.path(),
+        &[
+            "--json",
+            "config",
+            "update",
+            "--set-routing-url",
+            "https://saved.example/routing",
+            "--set-request-timeout",
+            "8s",
+        ],
+    );
+    assert!(applied.status.success());
+    let applied_json: Value = serde_json::from_slice(&applied.stdout).unwrap();
+    assert_eq!(
+        applied_json["data"]["values"]["routing_url"]["value"],
+        "https://saved.example/routing"
+    );
+    assert_eq!(
+        applied_json["data"]["values"]["request_timeout"]["value"],
+        "8s"
+    );
+    let saved = fs::read_to_string(home.path().join("reitti/config.toml")).unwrap();
+    assert!(saved.contains("routing_url = \"https://saved.example/routing\""));
+    assert!(saved.contains("request_timeout = \"8s\""));
+    assert!(!saved.contains("runtime.example"));
+    assert!(!saved.contains("connect_timeout"));
 }
 
 #[test]
@@ -431,6 +633,27 @@ fn output_files_are_private_and_failures_leave_existing_files_unchanged() {
 }
 
 #[test]
+fn invalid_output_parent_is_rejected_before_config_mutation() {
+    let home = TempDir::new().unwrap();
+    let output = run(
+        home.path(),
+        &[
+            "--json",
+            "--output",
+            home.path().join("missing/result.json").to_str().unwrap(),
+            "config",
+            "update",
+            "--language",
+            "fi",
+        ],
+    );
+    assert_eq!(output.status.code(), Some(1));
+    let error: Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(error["error"]["code"], "output_parent_not_found");
+    assert!(!home.path().join("reitti/config.toml").exists());
+}
+
+#[test]
 fn controls_are_rejected_and_text_errors_stay_on_one_line() {
     let home = TempDir::new().unwrap();
     let output = run(
@@ -442,6 +665,21 @@ fn controls_are_rejected_and_text_errors_stay_on_one_line() {
     assert_eq!(stderr.lines().count(), 1);
     assert!(stderr.contains("Töölö\\n\\u{1b}"));
     assert!(!stderr.contains('\u{1b}'));
+
+    let readable = run(
+        home.path(),
+        &[
+            "journey",
+            "list",
+            "--from",
+            "väärä:Töölö",
+            "--to",
+            "stop:HSL:1020453",
+        ],
+    );
+    let readable = String::from_utf8(readable.stderr).unwrap();
+    assert!(readable.contains("väärä:Töölö"));
+    assert!(!readable.contains("\\u{e4}"));
 }
 
 #[test]
@@ -500,7 +738,11 @@ fn foundation_documents_validate_against_bundled_support_schemas() {
     let home = TempDir::new().unwrap();
     let schema_for = |name: &str| {
         let output = run(home.path(), &["--json", "schema", "show", name]);
-        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         let value: Value = serde_json::from_slice(&output.stdout).unwrap();
         value["data"]["schema"].clone()
     };
@@ -510,28 +752,96 @@ fn foundation_documents_validate_against_bundled_support_schemas() {
             panic!("schema validation failed: {error}; instance={instance}");
         }
     };
+    for name in [
+        "version",
+        "config-path",
+        "config-show",
+        "config-update",
+        "schema-list",
+        "schema-show",
+        "doctor",
+        "skill-list",
+        "skill-print",
+        "skill-install",
+        "error",
+        "help",
+    ] {
+        let schema = schema_for(name);
+        let validator = jsonschema::validator_for(&schema).unwrap();
+        assert!(
+            validator.validate(&serde_json::json!({})).is_err(),
+            "{name} accepted a document missing every required field"
+        );
+    }
 
-    let version: Value = serde_json::from_slice(&run(home.path(), &["--json", "version"]).stdout).unwrap();
+    let version: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "version"]).stdout).unwrap();
     validate(schema_for("version"), &version["data"]);
-    let path: Value = serde_json::from_slice(&run(home.path(), &["--json", "config", "path"]).stdout).unwrap();
+    let path: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "config", "path"]).stdout).unwrap();
     validate(schema_for("config-path"), &path["data"]);
-    let show_output = reitti(home.path()).env("DIGITRANSIT_SUBSCRIPTION_KEY", "synthetic-key").args(["--json", "config", "show"]).output().unwrap();
+    let show_output = reitti(home.path())
+        .env("DIGITRANSIT_SUBSCRIPTION_KEY", "synthetic-key")
+        .args(["--json", "config", "show"])
+        .output()
+        .unwrap();
     let show: Value = serde_json::from_slice(&show_output.stdout).unwrap();
     validate(schema_for("config-show"), &show["data"]);
-    let update: Value = serde_json::from_slice(&run(home.path(), &["--json", "config", "update", "--language", "fi", "--dry-run"]).stdout).unwrap();
+    let update: Value = serde_json::from_slice(
+        &run(
+            home.path(),
+            &[
+                "--json",
+                "config",
+                "update",
+                "--language",
+                "fi",
+                "--dry-run",
+            ],
+        )
+        .stdout,
+    )
+    .unwrap();
     validate(schema_for("config-update"), &update["data"]);
-    let doctor: Value = serde_json::from_slice(&run(home.path(), &["--json", "doctor"]).stdout).unwrap();
+    let doctor: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "doctor"]).stdout).unwrap();
     validate(schema_for("doctor"), &doctor["data"]);
-    let skills: Value = serde_json::from_slice(&run(home.path(), &["--json", "skill", "list"]).stdout).unwrap();
+    let schema_list: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "schema", "list"]).stdout).unwrap();
+    validate(schema_for("schema-list"), &schema_list["data"]);
+    let schema_show: Value = serde_json::from_slice(
+        &run(home.path(), &["--json", "schema", "show", "schema-list"]).stdout,
+    )
+    .unwrap();
+    validate(schema_for("schema-show"), &schema_show["data"]);
+    let skills: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "skill", "list"]).stdout).unwrap();
     validate(schema_for("skill-list"), &skills["data"]);
-    let help: Value = serde_json::from_slice(&run(home.path(), &["--json", "config", "show", "--help"]).stdout).unwrap();
+    let help: Value =
+        serde_json::from_slice(&run(home.path(), &["--json", "config", "show", "--help"]).stdout)
+            .unwrap();
     validate(schema_for("help"), &help);
-    let error_output = run(home.path(), &["--json", "departure", "list", "--stop", "bad"]);
+    let error_output = run(
+        home.path(),
+        &["--json", "departure", "list", "--stop", "bad"],
+    );
     let error: Value = serde_json::from_slice(&error_output.stderr).unwrap();
     validate(schema_for("error"), &error);
 
     let output_file = home.path().join("saved.json");
-    let file_result: Value = serde_json::from_slice(&run(home.path(), &["--json", "--output", output_file.to_str().unwrap(), "version"]).stdout).unwrap();
+    let file_result: Value = serde_json::from_slice(
+        &run(
+            home.path(),
+            &[
+                "--json",
+                "--output",
+                output_file.to_str().unwrap(),
+                "version",
+            ],
+        )
+        .stdout,
+    )
+    .unwrap();
     let schema = schema_for("version");
     validate(schema["$defs"]["file_output"].clone(), &file_result["data"]);
 }

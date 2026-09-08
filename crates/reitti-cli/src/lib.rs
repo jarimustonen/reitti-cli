@@ -490,6 +490,8 @@ fn finish(
                             "output_write_failed",
                             format!("The command mutation was applied, but writing output '{}' failed: {}", command::escape_text(&path.to_string_lossy()), error.message),
                         )
+                        .with_detail("mutation_applied", true)
+                        .with_detail("output_path", path.to_string_lossy().into_owned())
                     } else {
                         error
                     };
@@ -630,6 +632,18 @@ fn execute_help(
         target
             .write_long_help(&mut bytes)
             .map_err(|error| AppError::io("Could not render help", &error))?;
+        if let Some(argv) = examples(&path)
+            .first()
+            .and_then(|example| example["argv"].as_array())
+        {
+            let command = argv
+                .iter()
+                .filter_map(Value::as_str)
+                .collect::<Vec<_>>()
+                .join(" ");
+            write!(&mut bytes, "\n\nExample:\n  {command}\n")
+                .map_err(|error| AppError::io("Could not render help example", &error))?;
+        }
         CommandOutput::success(String::from_utf8_lossy(&bytes), json!({}))
             .map(|output| (output, output_path))
     }
@@ -727,6 +741,7 @@ fn examples(path: &[String]) -> Vec<Value> {
     {
         ["location", "list"] => vec![
             "reitti", "--json", "location", "list", "--query", "Kamppi", "--kind", "stop",
+            "--limit", "5",
         ],
         ["journey", "list"] => vec![
             "reitti",
@@ -737,6 +752,8 @@ fn examples(path: &[String]) -> Vec<Value> {
             "place:example",
             "--to",
             "stop:HSL:1020453",
+            "--arrive-by",
+            "2026-09-08T10:00:00+03:00",
         ],
         ["stop", "list"] => vec![
             "reitti",
@@ -745,6 +762,10 @@ fn examples(path: &[String]) -> Vec<Value> {
             "list",
             "--near",
             "60.1699,24.9384",
+            "--radius-m",
+            "500",
+            "--limit",
+            "5",
         ],
         ["departure", "list"] => vec![
             "reitti",
@@ -753,10 +774,177 @@ fn examples(path: &[String]) -> Vec<Value> {
             "list",
             "--stop",
             "HSL:1020453",
+            "--at",
+            "2026-09-08T09:55:00+03:00",
+            "--limit",
+            "10",
+        ],
+        ["alert", "list"] => vec![
+            "reitti",
+            "--json",
+            "alert",
+            "list",
+            "--route",
+            "HSL:31M1",
+            "--stop",
+            "HSL:1020453",
+            "--active-at",
+            "2026-09-08T09:00:00+03:00",
         ],
         ["config", "path"] => vec!["reitti", "--json", "config", "path"],
-        ["doctor"] => vec!["reitti", "--json", "doctor"],
+        ["config", "show"] => vec!["reitti", "--json", "config", "show"],
+        ["config", "update"] => vec![
+            "reitti",
+            "--json",
+            "config",
+            "update",
+            "--language",
+            "fi",
+            "--dry-run",
+        ],
+        ["schema", "list"] => vec!["reitti", "--json", "schema", "list"],
+        ["schema", "show"] => vec!["reitti", "--json", "schema", "show", "journey-list"],
+        ["version"] => vec!["reitti", "--json", "version"],
+        ["doctor"] => vec!["reitti", "--json", "doctor", "--online"],
+        ["skill", "list"] => vec!["reitti", "--json", "skill", "list"],
+        ["skill", "print"] => vec!["reitti", "skill", "print", "reitti"],
+        ["skill", "install"] => vec![
+            "reitti",
+            "--json",
+            "skill",
+            "install",
+            "reitti",
+            "--agent",
+            "all",
+            "--dry-run",
+        ],
         _ => vec!["reitti", "--help"],
     };
     vec![json!({"description":"Example invocation","argv":argv})]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reitti_core::{FixedClock, FixedRequestIds};
+    use std::io::{Cursor, Error, ErrorKind};
+    use tempfile::tempdir;
+
+    struct FailingWriter;
+
+    impl Write for FailingWriter {
+        fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
+            Err(Error::new(ErrorKind::BrokenPipe, "synthetic broken pipe"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    struct FailingFlushWriter;
+
+    impl Write for FailingFlushWriter {
+        fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+            Ok(buffer.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Err(Error::other("synthetic flush failure"))
+        }
+    }
+
+    fn fixed_clock() -> FixedClock {
+        FixedClock::new(
+            DateTime::parse_from_rfc3339("2026-09-08T06:56:40Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        )
+    }
+
+    #[test]
+    fn stdout_failure_is_a_system_error() {
+        let mut stdin = Cursor::new(Vec::<u8>::new());
+        let mut stdout = FailingWriter;
+        let mut stderr = Vec::new();
+        let exit = run_with(
+            ["reitti", "--json", "version"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+            &mut stdin,
+            &mut stdout,
+            &mut stderr,
+            &fixed_clock(),
+            &FixedRequestIds::new("req_test"),
+        );
+        assert_eq!(exit, 2);
+        let error: Value = serde_json::from_slice(&stderr).unwrap();
+        assert_eq!(error["error"]["code"], "io_error");
+    }
+
+    #[test]
+    fn stdout_flush_failure_is_a_system_error() {
+        let mut stdin = Cursor::new(Vec::<u8>::new());
+        let mut stdout = FailingFlushWriter;
+        let mut stderr = Vec::new();
+        let exit = run_with(
+            ["reitti", "--json", "version"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+            &mut stdin,
+            &mut stdout,
+            &mut stderr,
+            &fixed_clock(),
+            &FixedRequestIds::new("req_test"),
+        );
+        assert_eq!(exit, 2);
+        let error: Value = serde_json::from_slice(&stderr).unwrap();
+        assert_eq!(error["error"]["code"], "io_error");
+    }
+
+    #[test]
+    fn post_mutation_output_failure_reports_applied_state() {
+        let directory = tempdir().unwrap();
+        let destination = directory.path().join("result.json");
+        let prepared = output::AtomicOutput::prepare(&destination).unwrap();
+        std::fs::create_dir(&destination).unwrap();
+        let mut result = CommandOutput::success("done", json!({"done": true})).unwrap();
+        result.mutation_applied = true;
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        let exit = finish(Ok(result), true, Some(prepared), &mut stdout, &mut stderr);
+        assert_eq!(exit, 2);
+        assert!(stdout.is_empty());
+        let error: Value = serde_json::from_slice(&stderr).unwrap();
+        assert_eq!(error["error"]["code"], "output_write_failed");
+        assert_eq!(error["error"]["details"]["mutation_applied"], true);
+    }
+
+    #[test]
+    fn version_alias_honors_verbose_with_injected_determinism() {
+        fn invoke(args: &[&str]) -> (u8, Vec<u8>, Vec<u8>) {
+            let mut stdin = Cursor::new(Vec::<u8>::new());
+            let mut stdout = Vec::new();
+            let mut stderr = Vec::new();
+            let exit = run_with(
+                args.iter().map(|arg| OsString::from(*arg)).collect(),
+                &mut stdin,
+                &mut stdout,
+                &mut stderr,
+                &fixed_clock(),
+                &FixedRequestIds::new("req_fixed"),
+            );
+            (exit, stdout, stderr)
+        }
+
+        let alias = invoke(&["reitti", "--version", "--json", "--verbose"]);
+        let command = invoke(&["reitti", "version", "--json", "--verbose"]);
+        assert_eq!(alias, command);
+        assert_eq!(alias.0, 0);
+        assert!(String::from_utf8(alias.2)
+            .unwrap()
+            .contains("\"request_id\":\"req_fixed\""));
+    }
 }
