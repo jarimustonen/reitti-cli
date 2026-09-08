@@ -32,6 +32,17 @@ and OSS release preparation. Keep the GitHub repository private; changing its
 visibility is reserved for the maintainer. Release readiness must be supported by
 working installation and smoke tests, not only the presence of release documents.
 
+### Review judgment
+
+Review findings are proposals, not an automatic work list. The maintainer
+explicitly requires the primary agent to reject false positives and low-value
+review churn. Fix a finding when source inspection or a focused reproduction
+shows a material correctness, usability, security, or maintenance problem.
+Prefer the smallest effective correction. Do not add speculative machinery,
+unsupported-platform work, cosmetic refactors, or repeated review rounds merely
+to reach zero findings. Record concise reasons for rejecting suggestions; do not
+automatically file every residual as an issue.
+
 ### macOS release runner
 
 The maintainer requires the existing self-hosted macOS ARM64 build machine for
