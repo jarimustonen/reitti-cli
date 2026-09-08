@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "data": {
+    "repo_root": ".",
+    "maturity": "mvp",
+    "core_complete": "incomplete",
+    "gaps": [
+      {
+        "id": "ci",
+        "category": "core",
+        "severity": "blocking",
+        "status": "absent",
+        "member": "shipshape-ci",
+        "detail": "no CI configuration found — test+lint on every PR is part of the gated core at mvp and above"
+      },
+      {
+        "id": "changelog",
+        "category": "canon",
+        "severity": "recommended",
+        "status": "absent",
+        "member": "shipshape-changelog",
+        "detail": "no CHANGELOG.md — mvp+ projects keep a changelog"
+      },
+      {
+        "id": "dependency-bot",
+        "category": "canon",
+        "severity": "recommended",
+        "status": "absent",
+        "member": "shipshape-ci",
+        "detail": "no dependency-update bot (dependabot/renovate) configured — recommended at mvp+"
+      },
+      {
+        "id": "github-topics",
+        "category": "canon",
+        "severity": "recommended",
+        "status": "absent",
+        "member": "shipshape-publicize",
+        "detail": "GitHub repository topics are empty — the project is harder to discover"
+      },
+      {
+        "id": "github-private-vulnerability-reporting",
+        "category": "canon",
+        "severity": "recommended",
+        "status": "unknown",
+        "member": "shipshape-publicize",
+        "detail": "SECURITY policy directs reporters to GitHub Private Vulnerability Reporting, but that repository setting is not verified enabled"
+      }
+    ],
+    "community_profile": {
+      "checked": true,
+      "unavailable_reason": null,
+      "readme": "present",
+      "license": "absent",
+      "contributing": "absent",
+      "code_of_conduct": "absent",
+      "issue_template": "absent",
+      "pull_request_template": "absent",
+      "security": "absent"
+    }
+  },
+  "warnings": []
+}

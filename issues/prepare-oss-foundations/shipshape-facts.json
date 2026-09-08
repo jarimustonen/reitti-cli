@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "data": {
+    "repo_root": ".",
+    "is_git": true,
+    "has_commits": true,
+    "ecosystems": [
+      "rust"
+    ],
+    "packages": [
+      {
+        "ecosystem": "rust",
+        "manifest": "crates/reitti-core/Cargo.toml",
+        "package": "reitti-core",
+        "version": "0.0.0"
+      },
+      {
+        "ecosystem": "rust",
+        "manifest": "crates/reitti-cli/Cargo.toml",
+        "package": "reitti-cli",
+        "version": "0.0.0"
+      }
+    ],
+    "committers_total": 1,
+    "committers_recent_year": 1,
+    "tags": [],
+    "has_semver_tag": false,
+    "has_ge_1_0_release": false,
+    "has_ci": false,
+    "dependency_bot": null,
+    "has_issues_dir": true,
+    "readme_self_label": null,
+    "description": "Agent-first command-line journey planner for Helsinki, Espoo, Vantaa, Kauniainen, Kerava, Kirkkonummi, Sipoo, Siuntio, a",
+    "maturity_signals": {
+      "production": false,
+      "spike": true
+    },
+    "inferred_maturity": "spike",
+    "distribution_surface": {
+      "has_cargo_dist": false,
+      "cargo_dist_evidence": [],
+      "tag_triggered_workflows": [],
+      "tag_triggered_cargo_publish_workflows": []
+    },
+    "cargo_publish": [
+      {
+        "manifest": "crates/reitti-core/Cargo.toml",
+        "package": "reitti-core",
+        "policy": "allowed"
+      },
+      {
+        "manifest": "crates/reitti-cli/Cargo.toml",
+        "package": "reitti-cli",
+        "policy": "allowed"
+      }
+    ]
+  },
+  "warnings": []
+}
