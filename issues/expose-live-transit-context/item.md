@@ -3,12 +3,16 @@ created: 2026-09-08
 updated: 2026-09-08
 type: feature
 reporter: jarimustonen
-status: testing
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: live-context
 lane_seq: 10
 blocked_by: ['@implement-digitransit-client']
+closed: 2026-09-08
+commits:
+- hash: b11a88c
+  summary: bounded-live-transit-context
 ---
 
 # Expose live departures and disruptions
@@ -30,3 +34,9 @@ Give route-planning agents the immediate operational context around a proposed t
 ### 2026-09-08T12:10:52Z · @pi
 
 Implemented stop, departure, and alert handlers plus exact schemas and deterministic injected-transport tests. All five local gates pass (45 Rust tests total, 21 provider fixtures). Anthropic/DeepSeek review was assessed; eight localized source-backed corrections were applied, four proposals were rejected as incorrect or low-value. Primary live smoke passed all three commands without credential echo; see validation.md and review-assessment.md.
+
+## Resolution
+
+### 2026-09-08T12:11:29Z · @issuectl
+
+Completed stop, departure, and alert handlers, exact schemas, deterministic injected tests, review assessment, all local gates, and primary live smoke validation.
