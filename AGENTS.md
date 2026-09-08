@@ -32,6 +32,15 @@ and OSS release preparation. Keep the GitHub repository private; changing its
 visibility is reserved for the maintainer. Release readiness must be supported by
 working installation and smoke tests, not only the presence of release documents.
 
+### macOS release runner
+
+The maintainer requires the existing self-hosted macOS ARM64 build machine for
+this project’s macOS release artifacts. Preserve the cargo-dist
+`[dist.github-custom-runners]` override for `aarch64-apple-darwin`; regenerate
+the workflow with cargo-dist after applying it. Do not replace this choice with
+a hosted macOS runner during shipshape generation. Untrusted pull-request jobs
+run on hosted runners; the self-hosted machine runs trusted release builds.
+
 ## Documentation Pattern
 
 Every directory follows this structure:

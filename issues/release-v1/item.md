@@ -34,3 +34,7 @@ Primary review of landed OSS foundations: final integration must remove stale pl
 
 Release preflight evidence: GitHub documents that artifact attestations in private/internal repositories require Enterprise Cloud (https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations). This target is currently private and User-owned; the available account API did not expose a plan, so capability is not verified. Check the actual private-repository build/sign path before promising keyless provenance or preserving an assumed blocker. Keep requested repository privacy. Do not silently claim unproduced attestations; prefer an honest, reviewed private-release path with verifiable checksums/build commit evidence and public-release-ready automation, documenting any platform limitation precisely.
 
+
+### Maintainer steering: macOS build runner
+
+Use the existing self-hosted macOS ARM64 machine used by the other family projects. This explicit maintainer instruction supersedes the initial hosted-only assumption. Configure and verify a dedicated repository runner; preserve the cargo-dist custom-runner override through workflow generation. Keep machine-specific connection details out of public documentation.
