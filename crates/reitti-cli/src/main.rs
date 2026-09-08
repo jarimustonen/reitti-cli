@@ -1,5 +1,3 @@
-//! The `reitti` binary — the thin CLI over `reitti-core`.
-
 fn main() {
-    println!("{}", reitti_core::placeholder());
+    std::process::exit(i32::from(reitti_cli::run_from_env()));
 }
