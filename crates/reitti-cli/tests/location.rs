@@ -298,6 +298,8 @@ fn journey_query_refuses_multiple_and_untrusted_singletons_with_copyable_refs() 
         error["error"]["details"]["retry_refs"],
         json!(["place:osm:venue:1", "place:osm:venue:2"])
     );
+    assert_eq!(error["error"]["details"]["candidate_limit"], 5);
+    assert_eq!(error["error"]["details"]["complete"], false);
     assert!(!String::from_utf8_lossy(&stderr).contains("secret-canary"));
     assert_eq!(multiple.requests().len(), 1);
 
@@ -336,6 +338,37 @@ fn journey_query_refuses_multiple_and_untrusted_singletons_with_copyable_refs() 
     assert_eq!(
         error["error"]["details"]["retry_refs"],
         json!(["place:osm:venue:3"])
+    );
+
+    let absent = MockTransport::new(vec![collection(vec![feature(
+        "osm:venue:4",
+        "Okänd",
+        "Okänd",
+        "venue",
+        "openstreetmap",
+        None,
+        None,
+        60.3,
+        24.7,
+    )])]);
+    let (exit, _, stderr) = run(
+        &absent,
+        &[
+            "--json",
+            "--geocoding-url",
+            "https://mock.test/geocoding/v1",
+            "journey",
+            "list",
+            "--from",
+            "query:Okänd",
+            "--to",
+            "coord:60,24",
+        ],
+    );
+    assert_eq!(exit, 1);
+    assert_eq!(
+        parse(&stderr)["error"]["message"],
+        "The only candidate has no explicit provider confidence."
     );
 }
 
@@ -446,6 +479,13 @@ fn query_resolution_handles_no_match_broad_locality_and_two_trusted_endpoints() 
         "unique_query"
     );
     assert_eq!(error["error"]["details"]["from"]["service_area"], "unknown");
+    assert_eq!(
+        error["error"]["details"]["sources"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
     assert_eq!(trusted.requests().len(), 2);
 }
 
@@ -550,7 +590,7 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
     let outside = MockTransport::new(vec![collection(vec![feature(
         "osm:venue:outside",
         "Ute",
-        "Ute, Stockholm",
+        "Ute\nStockholm",
         "venue",
         "openstreetmap",
         Some("Stockholm"),
@@ -568,6 +608,43 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
             "list",
             "--from",
             "place:osm:venue:outside",
+            "--to",
+            "coord:60,24",
+        ],
+    );
+    assert_eq!(exit, 1);
+    let error = parse(&stderr);
+    assert_eq!(error["error"]["code"], "location_outside_service_area");
+    assert!(error["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("Ute\\nStockholm"));
+    assert!(!error["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("Ute\nStockholm"));
+
+    let query_outside = MockTransport::new(vec![collection(vec![feature(
+        "osm:address:outside",
+        "Ulkona",
+        "Ulkona, Stockholm",
+        "address",
+        "openstreetmap",
+        Some("Stockholm"),
+        Some(0.99),
+        59.3,
+        18.0,
+    )])]);
+    let (exit, _, stderr) = run(
+        &query_outside,
+        &[
+            "--json",
+            "--geocoding-url",
+            "https://mock.test/geocoding/v1",
+            "journey",
+            "list",
+            "--from",
+            "query:Ulkona",
             "--to",
             "coord:60,24",
         ],
@@ -651,4 +728,29 @@ fn coordinates_make_zero_requests_and_stop_refs_make_exactly_one() {
         .unwrap()
         .contains("stale"));
     assert_eq!(stale.requests().len(), 1);
+
+    let missing_coordinates = MockTransport::new(vec![json!({"data":{"stop":{
+        "gtfsId":"HSL:1020453", "name":"Päärautatieasema", "code":null,
+        "platformCode":null, "lat":null, "lon":null,
+        "vehicleMode":"RAIL", "wheelchairBoarding":"NO_INFORMATION"
+    }}})]);
+    let (exit, _, stderr) = run(
+        &missing_coordinates,
+        &[
+            "--json",
+            "--routing-url",
+            "https://mock.test/routing/v2/hsl/gtfs/v1",
+            "journey",
+            "list",
+            "--from",
+            "stop:HSL:1020453",
+            "--to",
+            "coord:60,24",
+        ],
+    );
+    assert_eq!(exit, 1);
+    let error = parse(&stderr);
+    assert_eq!(error["error"]["code"], "location_coordinates_unavailable");
+    assert_eq!(error["error"]["details"]["coordinates"], Value::Null);
+    assert_eq!(missing_coordinates.requests().len(), 1);
 }

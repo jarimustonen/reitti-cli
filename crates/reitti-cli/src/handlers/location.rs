@@ -262,7 +262,7 @@ fn reject_outside(input_ref: &str, candidate: &LocationCandidate) -> Result<(), 
             "location_outside_service_area",
             format!(
                 "Location '{}' is proven outside the nine-municipality HSL service area.",
-                candidate.label
+                crate::command::escape_text(&candidate.label)
             ),
         )
         .with_detail("input_ref", input_ref)
@@ -288,6 +288,8 @@ fn location_ambiguous(input_ref: &str, reason: &str, candidates: &[LocationCandi
         .with_detail("input_ref", input_ref)
         .with_detail("reason", reason)
         .with_detail("candidates", json!(candidates))
+        .with_detail("candidate_limit", RESOLUTION_CANDIDATE_LIMIT)
+        .with_detail("complete", false)
         .with_detail("retry_refs", json!(retry_refs));
     if let [candidate] = candidates {
         error = error.with_detail("selected_ref_retry", candidate.reference.clone());
@@ -297,15 +299,16 @@ fn location_ambiguous(input_ref: &str, reason: &str, candidates: &[LocationCandi
 
 fn stop_candidate(stop: Stop, input_ref: &str) -> Result<LocationCandidate, AppError> {
     let coordinates = stop.coordinates.ok_or_else(|| {
-        location_not_found(
-            input_ref,
+        AppError::caller(
+            "location_coordinates_unavailable",
             "The selected HSL stop exists but has no provider coordinates and cannot be used as a journey endpoint.",
         )
+        .with_detail("input_ref", input_ref)
         .with_detail("stop_ref", stop.reference.clone())
         .with_detail("coordinates", json!(null))
     })?;
     Ok(LocationCandidate {
-        reference: format!("stop:{}", stop.id),
+        reference: stop.reference,
         kind: LocationKind::Stop,
         id: Some(stop.id),
         label: stop.name.clone(),
@@ -429,7 +432,7 @@ fn location_text(
         ));
     }
     lines.push("Use a returned ref in reitti journey list --from <ref> …".to_owned());
-    lines.push(source.attribution.clone());
+    lines.push(crate::command::escape_text(&source.attribution));
     lines.join("\n")
 }
 

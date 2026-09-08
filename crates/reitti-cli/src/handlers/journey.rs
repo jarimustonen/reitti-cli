@@ -26,7 +26,7 @@ pub fn execute(
     // without repeating either lookup.
     let from = location::resolve(&context, &args.from, from_ref, language)?;
     let to = location::resolve(&context, &args.to, to_ref, language)?;
-    let sources = sources_in_first_use_order([from.source.as_ref(), to.source.as_ref()]);
+    let sources = sources_in_request_order([from.source.as_ref(), to.source.as_ref()]);
 
     Err(AppError::feature_incomplete("journey planning")
         .with_detail("stage", "locations_resolved")
@@ -37,21 +37,12 @@ pub fn execute(
         .with_detail("plan_requests_sent", 0_u8))
 }
 
-fn sources_in_first_use_order<'a>(
+fn sources_in_request_order<'a>(
     sources: impl IntoIterator<Item = Option<&'a ProviderSource>>,
 ) -> Vec<&'a ProviderSource> {
-    let mut unique = Vec::new();
-    for source in sources.into_iter().flatten() {
-        if !unique.iter().any(|existing: &&ProviderSource| {
-            existing.provider == source.provider
-                && existing.dataset == source.dataset
-                && existing.product == source.product
-                && existing.retrieved_at == source.retrieved_at
-        }) {
-            unique.push(source);
-        }
-    }
-    unique
+    // Each source carries its own retrieval time, so preserve one entry per
+    // actual lookup rather than collapsing separately retrieved evidence.
+    sources.into_iter().flatten().collect()
 }
 
 pub(crate) use schema::schema;
