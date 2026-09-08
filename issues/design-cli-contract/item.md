@@ -25,10 +25,10 @@ Define a small, stable `reitti` command surface and versioned output schema befo
 
 ## Accepted surface
 
-- `reitti location search`
-- `reitti journey plan`
-- `reitti stop search`
-- `reitti stop departures`
+- `reitti location list`
+- `reitti journey list`
+- `reitti stop list`
+- `reitti departure list`
 - `reitti alert list`
 - Canon-required `config`, `schema`, `version`, `doctor`, and `skill` surfaces
 

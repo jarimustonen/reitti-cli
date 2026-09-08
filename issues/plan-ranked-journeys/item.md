@@ -15,7 +15,7 @@ blocked_by: ['@resolve-journey-locations']
 
 ## Objective
 
-Make `reitti journey plan` useful as an evidence source for a travel-planning agent.
+Make `reitti journey list` useful as an evidence source for a travel-planning agent.
 
 ## Acceptance criteria
 

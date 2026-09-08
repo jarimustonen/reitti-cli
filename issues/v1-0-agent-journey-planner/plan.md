@@ -15,16 +15,16 @@ The CLI is the stable product boundary. Human-readable output is useful for dire
 - **Protocol-neutral core.** Keep route planning and comparison in `reitti-core`; CLI rendering and HTTP live at the edges. MCP can later wrap the same core.
 - **HSL scope stated honestly.** v1.0 promises the nine verified municipalities, while the provider/router abstraction may support later regions.
 
-## Preliminary command surface
+## Command surface
 
-The detailed surface is owned by @design-cli-contract and may change after API validation.
+The authoritative surface is in [the CLI contract](../design-cli-contract/design.md), including validation and JSON schemas. Resource queries use the shared canon’s `list` verb.
 
 ```text
-reitti location search <QUERY>
-reitti journey plan --from <PLACE> --to <PLACE> [--depart-at <RFC3339> | --arrive-by <RFC3339>]
-reitti stop search <QUERY>
-reitti stop departures <STOP_ID>
-reitti disruption list [--route <ID>] [--stop <ID>]
+reitti location list --query <QUERY>
+reitti journey list --from <PLACE> --to <PLACE> [--depart-at <RFC3339> | --arrive-by <RFC3339>]
+reitti stop list --query <QUERY>
+reitti departure list --stop <STOP_ID>
+reitti alert list [--route <ID>] [--stop <ID>]
 reitti config path
 reitti config show
 reitti doctor
