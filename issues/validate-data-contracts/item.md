@@ -3,11 +3,15 @@ created: 2026-09-08
 updated: 2026-09-08
 type: task
 reporter: jarimustonen
-status: in-progress
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: foundation
 lane_seq: 10
+closed: 2026-09-08
+commits:
+- hash: ebdc7cc
+  summary: validate Digitransit data contracts
 ---
 
 # Validate HSL and Digitransit data contracts
