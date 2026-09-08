@@ -44,10 +44,10 @@ One CLI invocation performs at most the following provider requests:
 
 | Command | Maximum | Shape |
 |---|---:|---|
-| `location search` | 1 | one geocoding search |
-| `stop search` | 1 | one bounded Routing v2 stop query |
-| `journey plan` | 3 | at most one lookup for each `query:`/`place:`/`stop:` endpoint, then one plan query; `coord:` adds no lookup |
-| `stop departures` | 1 | one bounded Routing v2 stop query |
+| `location list` | 1 | one geocoding search |
+| `stop list` | 1 | one bounded Routing v2 stop query |
+| `journey list` | 3 | at most one lookup for each `query:`/`place:`/`stop:` endpoint, then one plan query; `coord:` adds no lookup |
+| `departure list` | 1 | one bounded Routing v2 stop query |
 | `alert list` | 1 | one Routing v2 alert query, filtered and capped locally if needed |
 | `doctor` | 0 offline / 2 online | local checks by default; `--online` adds one minimal geocoding and one Routing v2 probe |
 | all other commands | 0 | local only |
@@ -61,17 +61,24 @@ changing domain models.
 
 ## 2. Command grammar
 
+All resource queries use the canon's `list` verb. Journeys are computed
+alternatives, not saved resources; `journey list` performs planning and does not
+create persistent state. Place and stop searches use explicit `--query` filters.
+Departure boards are the `departure` resource with a required `--stop` filter.
+The unreleased draft spellings `search`, `plan`, and `stop departures` are not
+aliases or supported commands.
+
 Canonical synopsis (brackets mean optional syntax, not literal characters):
 
 ```text
-reitti [GLOBAL] location search <QUERY> [--kind <KIND>] [--language <LANG>] [--limit <N>]
-reitti [GLOBAL] journey plan --from <LOCATION_REF> --to <LOCATION_REF>
+reitti [GLOBAL] location list --query <QUERY> [--kind <KIND>] [--language <LANG>] [--limit <N>]
+reitti [GLOBAL] journey list --from <LOCATION_REF> --to <LOCATION_REF>
        [--depart-at <RFC3339> | --arrive-by <RFC3339>]
        [--mode <MODE>]... [--max-walk-m <M>] [--wheelchair]
        [--include-geometry] [--language <LANG>] [--limit <N>]
-reitti [GLOBAL] stop search [<QUERY> | --near <COORDINATES>]
+reitti [GLOBAL] stop list [--query <QUERY> | --near <COORDINATES>]
        [--radius-m <M>] [--language <LANG>] [--limit <N>]
-reitti [GLOBAL] stop departures <STOP_ID> [--at <RFC3339>]
+reitti [GLOBAL] departure list --stop <STOP_ID> [--at <RFC3339>]
        [--window <DURATION>] [--mode <MODE>]... [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] alert list [--route <ROUTE_ID>]... [--stop <STOP_ID>]...
        [--active-at <RFC3339>] [--language <LANG>] [--limit <N>]
@@ -163,11 +170,11 @@ changing interpretation. Stop-specific positions instead accept a canonical
 raw `STOP_ID`, for example `HSL:1020453`, because the argument type is already
 unambiguous. A prefixed `stop:HSL:…` there is rejected with `invalid_stop_id`.
 
-`location search` returns `candidate.ref` values byte-for-byte suitable for
-`journey plan`. A `query:` endpoint in `journey plan` performs a bounded search:
+`location list` returns `candidate.ref` values byte-for-byte suitable for
+`journey list`. A `query:` endpoint in `journey list` performs a bounded search:
 zero candidates is `location_not_found`; exactly one accepted in-area candidate
 resolves; more than one is `location_ambiguous`. The ambiguity error includes
-the same bounded candidate objects as `location search` and an exact retry
+the same bounded candidate objects as `location list` and an exact retry
 example using `place:` or `stop:`. Provider confidence may be reported but is
 never used alone to silently select a winner. A `place:` reference is looked up
 by stable Pelias gid; a missing/stale gid is `location_not_found`.
@@ -178,8 +185,7 @@ municipality polygon contract has been verified, a bare coordinate has
 `service_area: "unknown"`; the CLI neither claims it is inside nor rejects it.
 `stop:` is resolved by Routing v2 and retains the HSL GTFS id.
 
-`stop search` has two mutually exclusive forms. A positional query searches
-named stops. `--near` finds stops around an exact coordinate and requires no
+`stop list` has two mutually exclusive forms. `--query` searches named stops. `--near` finds stops around an exact coordinate and requires no
 query. Omitting both is a usage error.
 
 ## 4. Shared JSON protocol
@@ -366,19 +372,19 @@ a field in v1 because the provider supplies no verified confidence measure.
 
 ## 6. Data command contracts
 
-### `location search`
+### `location list`
 
 `--kind` accepts `any|address|venue|stop`, default `any`. Results preserve
 provider order and are capped by the requested limit. No candidates is a
 successful empty result, not an error.
 
 ```console
-$ reitti location search Kamppi --kind stop --limit 3
+$ reitti location list --query Kamppi --kind stop --limit 3
 3 location candidates for “Kamppi” (Digitransit, retrieved 2026-09-08 06:56 UTC)
 1  Kampin metroasema (Kamppi), Helsinki  subway  place:gtfshsl:station:GTFS:HSL:1000102
 2  Kamppi, Kampinkuja 1, Helsinki         —       place:openstreetmap:station:node:1378007268
 3  Kamppi (kaukoliikenneterminaali)       bus     place:gtfshsl:station:GTFS:HSL:1000015
-Use a returned ref in `reitti journey plan --from <ref> …`.
+Use a returned ref in `reitti journey list --from <ref> …`.
 ```
 
 ```json
@@ -401,7 +407,7 @@ Use a returned ref in `reitti journey plan --from <ref> …`.
 `complete` is false whenever the provider indicates more candidates may exist or
 reitti cannot prove completeness; it is never inferred solely from `count < limit`.
 
-### `journey plan`
+### `journey list`
 
 Exactly zero or one of `--depart-at` and `--arrive-by` is accepted. With neither,
 the request means depart at the injected current time and records
@@ -422,7 +428,7 @@ Labels are sorted in that order and each fact includes the measured value and
 tie count. There is no `recommended` label or opaque score.
 
 ```console
-$ reitti journey plan --from place:gtfshsl:station:GTFS:HSL:1000102 \
+$ reitti journey list --from place:gtfshsl:station:GTFS:HSL:1000102 \
     --to coord:60.1776,24.6529 --depart-at 2026-09-08T09:30:00+03:00 --limit 2
 2 alternatives · Kamppi → 60.1776,24.6529 · depart 09:30 EEST
 1  10:02–10:45  42m55s  1 transfer   walk 10m56s  M1 → 531  earliest arrival
@@ -573,10 +579,10 @@ and retry suggestions; it is not success with a fabricated fallback. A GraphQL
 `errors` array is exit 2 even with HTTP 200. Partial GraphQL data plus errors is
 not served in v1 because completeness cannot be established.
 
-### `stop search`
+### `stop list`
 
 ```console
-$ reitti stop search --near 60.1699,24.9384 --radius-m 500 --limit 2
+$ reitti stop list --near 60.1699,24.9384 --radius-m 500 --limit 2
 2 stops within 500 m of 60.1699,24.9384
 HSL:1020453  Päärautatieasema  tram  310 m  stop:HSL:1020453
 HSL:1000102  Kamppi            subway 470 m  stop:HSL:1000102
@@ -602,7 +608,7 @@ radius are null. `wheelchair_boarding` is
 `accessible|not_accessible|unknown`; source unknown never becomes accessible.
 No matches is successful with `stops: []`.
 
-### `stop departures`
+### `departure list`
 
 `--at` defaults to the injected current time. Departures are in ascending
 operational departure time, then trip id. Routing `serviceDay` is combined with
@@ -610,7 +616,7 @@ seconds-after-service-day before output. `scheduledDeparture` and
 `realtimeDeparture` are never interpreted as Unix timestamps by themselves.
 
 ```console
-$ reitti stop departures HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 3
+$ reitti departure list --stop HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 3
 Päärautatieasema · next 3 departures from 09:55 EEST
 09:57 est  3  Kuusitie via Kallio  37s early  updated
 09:58 est  5  Katajanokan term.    44s early  updated
@@ -774,10 +780,10 @@ value. Config path/show/version/schema/skill work without credentials.
 `schema list` returns the stable names:
 
 ```text
-location-search
-journey-plan
-stop-search
-stop-departures
+location-list
+journey-list
+stop-list
+departure-list
 alert-list
 config-path
 config-show
@@ -798,7 +804,7 @@ help
 complete documents. Under `--json`, data is `{name, dialect, schema}`. Unknown
 name is `schema_not_found` exit 1 with accepted names. Schemas use stable, location-independent `$id` values
 `urn:reitti:schema:v1:<name>`, for example
-`urn:reitti:schema:v1:journey-plan`. They are identifiers, not fetchable URLs.
+`urn:reitti:schema:v1:journey-list`. They are identifiers, not fetchable URLs.
 
 ### Version
 
@@ -833,14 +839,14 @@ Every command path supports both orderings of `--help --json` and emits:
 {
   "schema_version": 1,
   "data": {
-    "path": ["journey", "plan"],
+    "path": ["journey", "list"],
     "summary": "Plan and compare bounded journey alternatives.",
-    "usage": "reitti [GLOBAL] journey plan --from <LOCATION_REF> --to <LOCATION_REF> …",
+    "usage": "reitti [GLOBAL] journey list --from <LOCATION_REF> --to <LOCATION_REF> …",
     "args": [],
     "flags": [{"name": "--from", "required": true, "repeatable": false, "value_name": "LOCATION_REF", "possible_values": [], "default": null, "env": null, "global": false, "hidden": false, "deprecated": null}],
     "subcommands": [],
     "exit_codes": [{"code": 0, "meaning": "success"}, {"code": 1, "meaning": "caller/domain-actionable error"}, {"code": 2, "meaning": "system/provider/internal error"}, {"code": 130, "meaning": "SIGINT cancellation"}, {"code": 143, "meaning": "SIGTERM cancellation"}],
-    "examples": [{"description": "Plan from a selected place for an explicit departure time", "argv": ["reitti", "--json", "journey", "plan", "--from", "place:gtfshsl:station:GTFS:HSL:1000102", "--to", "coord:60.1776,24.6529", "--depart-at", "2026-09-08T09:30:00+03:00"]}]
+    "examples": [{"description": "Plan from a selected place for an explicit departure time", "argv": ["reitti", "--json", "journey", "list", "--from", "place:gtfshsl:station:GTFS:HSL:1000102", "--to", "coord:60.1776,24.6529", "--depart-at", "2026-09-08T09:30:00+03:00"]}]
   },
   "warnings": []
 }
@@ -851,16 +857,16 @@ lists validation ranges, config environment mappings, exits, and at least one
 copy-pasteable example. Required examples for the command paths are:
 
 ```text
-location search: reitti --json location search Kamppi --kind stop --limit 5
-journey plan: reitti --json journey plan --from place:… --to stop:HSL:1020453 --arrive-by 2026-09-08T10:00:00+03:00
-stop search: reitti --json stop search --near 60.1699,24.9384 --radius-m 500 --limit 5
-stop departures: reitti --json stop departures HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 10
+location list: reitti --json location list --query Kamppi --kind stop --limit 5
+journey list: reitti --json journey list --from place:… --to stop:HSL:1020453 --arrive-by 2026-09-08T10:00:00+03:00
+stop list: reitti --json stop list --near 60.1699,24.9384 --radius-m 500 --limit 5
+departure list: reitti --json departure list --stop HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 10
 alert list: reitti --json alert list --route HSL:31M1 --stop HSL:1020453 --active-at 2026-09-08T09:00:00+03:00
 config path: reitti --json config path
 config show: reitti --json config show
 config update: printf '%s\n' "$DIGITRANSIT_KEY" | reitti --json config update --subscription-key-stdin
 schema list: reitti --json schema list
-schema show: reitti --json schema show journey-plan
+schema show: reitti --json schema show journey-list
 version: reitti --json version
 doctor: reitti --json doctor --online
 skill list: reitti --json skill list
@@ -934,8 +940,8 @@ All still use the common `{schema_version,data,warnings}` envelope.
     "unchanged": [],
     "values": {"subscription_key": {"value": "<redacted>", "source": "file", "secret": true}}
   },
-  "schema_list": {"schemas": [{"name": "journey-plan", "schema_version": 1}]},
-  "schema_show": {"name": "journey-plan", "dialect": "https://json-schema.org/draft/2020-12/schema", "schema": {}},
+  "schema_list": {"schemas": [{"name": "journey-list", "schema_version": 1}]},
+  "schema_show": {"name": "journey-list", "dialect": "https://json-schema.org/draft/2020-12/schema", "schema": {}},
   "doctor": {
     "online": false,
     "checks": [{"id": "config.path", "status": "ok", "message": "Config path is secure and readable.", "fix_suggestion": null, "details": {}}],

@@ -64,3 +64,8 @@ Reopened for primary-agent review corrections before implementation: offline dia
 ### 2026-09-08T08:11:27Z · @codex
 
 Primary-agent final review directly amended the implementation contract using production-schema evidence: boolean wheelchair-aware routing rather than an unsupported hard guarantee; max walking as an explicit local cap over bounded candidates; authoritative provider alert IDs and itinerary transfer/walk/wait metrics; nondeprecated stopCalls and navigation fields. Transit-leg-count minus one is wrong for stay-seated interlining. Earlier primary corrections (offline doctor, raw stop IDs, honest unknown coordinate coverage, alert relevance union, geometry bounds, corrected comparison labels) were incorporated by the worker. The final schema evidence is recorded under @implement-digitransit-client.
+
+### 2026-09-08T08:33:33Z · @codex
+
+Primary-agent canon audit corrected the unreleased query grammar: location list --query, journey list --from/--to, stop list --query or --near, departure list --stop, alert list. The original search/plan/departures spellings were resource-query verbs outside the binding canon section 7 closed vocabulary; they are not compatibility aliases. Internal API methods may still be named plan/search. The authoritative design now uses canonical public schema names location-list, journey-list, stop-list and departure-list. This is a pre-release design correction, not a shipped breaking change.
+
