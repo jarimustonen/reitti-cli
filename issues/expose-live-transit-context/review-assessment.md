@@ -11,7 +11,7 @@
 | F7 | Mixed heading and row timezones are inconsistent | INCORRECT | — | — | — | HIGH | DROP (Rule 1a) |
 | F8 | Invalid configured timezone is detected after provider I/O | INCORRECT | — | — | — | HIGH | DROP (Rule 1a) |
 | F9 | Nearby coordinates are parsed twice | CONFIRMED | REGULAR | IMPROVES | NONE | HIGH | FIX |
-| F10 | RouteType is mislabeled unknown instead of broad scope | CONFIRMED | OCCASIONAL | IMPROVES | NONE | MED | FIX |
+| F10 | RouteType detail is unavailable and must remain conservatively unresolved | CONFIRMED | OCCASIONAL | IMPROVES | NONE | HIGH | FIX |
 | F11 | Alert text may show Debug casing or blank optional header | CONFIRMED | OCCASIONAL | IMPROVES | NONE | HIGH | FIX |
 | F12 | Extract common helpers and schema fragments | CONFIRMED | RARE | NEUTRAL | MODERATE | HIGH | DROP (Rule 1b) |
 
@@ -21,4 +21,4 @@ No residual met the filing bar; no issue was staged or filed.
 
 ## Applied source-backed corrections
 
-The accepted localized fixes are implemented in the owned handler/test files. Command-layer typed ID and duplicate validation, explicit-argument/configured-display timezone behavior, and centrally added schema IDs were verified and therefore not changed. Shared helper/schema extraction, extra provider requests, and client-query redesign were rejected as unsupported or low-value churn. The final deterministic suite covers the material accepted findings. Review evidence is also retained in the worker scratch files `history/review-live-context-handlers.md` and `history/assessment-live-context-handlers.{json,md}` during this run.
+The accepted localized fixes are implemented in the owned handler/test files. RouteType is retained with an unresolved-scope warning because the adapter does not preserve its required route type and optional agency/routes restrictions; it is not assumed feed-wide. Command-layer typed ID and duplicate validation, explicit-argument/configured-display timezone behavior, and centrally added schema IDs were verified and therefore not changed. Shared helper/schema extraction, extra provider requests, and client-query redesign were rejected as unsupported or low-value churn. The final deterministic suite covers the material accepted findings. Review evidence is also retained in the worker scratch files `history/review-live-context-handlers.md` and `history/assessment-live-context-handlers.{json,md}` during this run.

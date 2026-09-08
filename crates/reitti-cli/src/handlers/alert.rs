@@ -169,6 +169,7 @@ fn scope_unknown(alert: &Alert, has_route_filters: bool, has_stop_filters: bool)
     alert.entities.is_empty()
         || alert.entities.iter().any(|entity| {
             entity.kind == "unknown"
+                || entity.kind == "route_type"
                 || (!matches!(
                     entity.kind.as_str(),
                     "agency"
@@ -195,10 +196,7 @@ fn scope_unknown(alert: &Alert, has_route_filters: bool, has_stop_filters: bool)
 }
 
 fn feed_wide(alert: &Alert) -> bool {
-    alert
-        .entities
-        .iter()
-        .any(|entity| matches!(entity.kind.as_str(), "agency" | "route_type"))
+    alert.entities.iter().any(|entity| entity.kind == "agency")
 }
 
 fn alert_order(left: &Alert, right: &Alert) -> Ordering {
