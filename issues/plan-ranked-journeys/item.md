@@ -3,12 +3,19 @@ created: 2026-09-08
 updated: 2026-09-08
 type: feature
 reporter: jarimustonen
-status: in-progress
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: journey-experience
 lane_seq: 20
 blocked_by: ['@resolve-journey-locations']
+closed: 2026-09-08
+closed_by: codex
+commits:
+- hash: c962e28
+  summary: deliver ranked journey alternatives
+- hash: 9a33d44
+  summary: preserve partial routing completeness
 ---
 
 # Plan and compare ranked journey alternatives
@@ -30,3 +37,9 @@ Make `reitti journey list` useful as an evidence source for a travel-planning ag
 ### 2026-09-08T12:44:54Z · @codex
 
 Implemented the complete ranked-journey handler/schema and deterministic integration coverage. The handler consumes the landed endpoint resolver and typed provider client, enforces one-to-three operations and local output/walking bounds, preserves source evidence and explicit offsets, emits honest comparisons/navigation/realtime/accessibility/warnings, and renders timezone-consistent actionable text. Integration seams, deterministic coverage, local results, and primary pre-final-draft live evidence are recorded in validation.md.
+
+## Resolution
+
+### 2026-09-08T13:12:56Z · @codex
+
+Completed journey planning, normalization, exact schema, deterministic integration coverage, source-grounded review fixes, all required local gates, primary production smoke evidence, and independent Linux ARM64/Rust 1.88 validation. External advisory reviewers returned no output before primary cancellation and are not claimed as passed. Final release smoke and GitHub CI remain primary-owned.
