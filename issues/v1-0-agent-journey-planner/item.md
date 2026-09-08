@@ -64,3 +64,7 @@ The user authorizes autonomous CLI design, full implementation, onboarding/confi
 
 The user explicitly requires primary-agent ownership of quality: independently review and revise delegated work, especially complex design. Worker reports and passing checks are evidence, not automatic acceptance. The primary agent reviews the CLI contract before implementation and inspects implementation behavior before release readiness is claimed.
 
+
+### 2026-09-08T13:04:57Z · @codex
+
+The maintainer explicitly requires independent judgment of review findings. External model reviews are advisory proposals: assess them against source and supported behavior, fix material confirmed problems, and reject speculative machinery or automatic residual-issue filing. Use one proportionate independent pass without cross-review or zero-findings loops. An external review timeout is disclosed as unavailable evidence, not a passed review or an automatic reason to discard an otherwise independently validated deliverable. Repository validation gates remain required.
