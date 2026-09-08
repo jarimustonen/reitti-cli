@@ -9,6 +9,11 @@ epic: v1-0-agent-journey-planner
 lane: foundation
 lane_seq: 30
 blocked_by: ['@design-cli-contract']
+commits:
+- hash: 8a1fdd6030c3933bdd28ff770c07c64821f868bb
+  summary: 'chore: track Rust workspace lockfile'
+- hash: b0c42c9c6291fe586522f58930cc96c237730528
+  summary: 'chore: add project-canon Rust scaffold'
 ---
 
 # Scaffold the Rust core and CLI workspace
