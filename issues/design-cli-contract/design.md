@@ -654,9 +654,12 @@ filter, an alert affecting only that route remains relevant; there is no
 cross-type AND that hides it. Repeated identical filters are rejected.
 An alert whose entity scope is absent or unknown is conservatively retained as
 possibly feed-wide with an `alert_scope_unknown` warning, never silently
-dropped. `--active-at` defaults to the injected current time. An alert with an
-unknown validity boundary is retained and marked by a warning; the CLI does not
-infer inactivity. Sort by severity
+dropped. `--active-at` defaults to the injected current time. An unknown validity boundary alone does not establish inactivity: retain the
+alert with a warning unless a known boundary proves it is outside the requested
+time (a known start is still in the future, or a known end has passed). Apply
+known boundaries independently, so a missing end does not make a future alert
+active today. Warnings about retained unknown scope or validity describe the
+returned alerts. Sort by severity
 (`severe`, `warning`, `info`, `unknown`), then start time (null last), then id.
 
 ```console
