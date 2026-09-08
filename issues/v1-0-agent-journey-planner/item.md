@@ -33,13 +33,13 @@ Excluded from v1.0: ticket purchase, account-specific HSL data, a graphical map 
 
 ## Issues
 
-- [ ] @validate-data-contracts — validate current endpoints, licensing, and fixtures
+- [x] @validate-data-contracts — validate current endpoints, licensing, and fixtures
 - [x] @design-cli-contract — define the command and JSON contracts
-- [ ] @scaffold-rust-workspace — establish the testable Rust foundation
+- [x] @scaffold-rust-workspace — establish the testable Rust foundation
 - [x] @implement-digitransit-client — implement typed data access
-- [ ] @resolve-journey-locations — make endpoint resolution safe and retryable
+- [x] @resolve-journey-locations — make endpoint resolution safe and retryable
 - [ ] @plan-ranked-journeys — compare and explain route alternatives
-- [ ] @expose-live-transit-context — expose departures and disruptions
+- [x] @expose-live-transit-context — expose departures and disruptions
 - [ ] @ship-agent-skill — package the agent operating workflow
 - [ ] @release-v1 — verify and publish v1.0
 
