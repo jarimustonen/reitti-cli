@@ -30,3 +30,9 @@ Let agents safely turn human place descriptions into journey endpoints.
 ### 2026-09-08T08:16:07Z · @codex
 
 Primary review: a singleton geocoder result is not automatically a trustworthy address match. Define accepted singleton explicitly: reject low or absent confidence and broad locality/other matches unless caller selects their returned place ref. Prefer explicit selected refs; location_ambiguous may contain just one unconfirmed candidate with a reason. Preserve Finnish/Swedish names, recognize both language forms of supported municipalities when classifying area, and keep unknown coordinates unknown. Do not use a coarse bounding box as proof of municipality membership.
+
+## Agent Runs
+
+### 2026-09-08T11:48:21Z · @codex
+
+Implemented typed location listing and reusable journey endpoint resolution. Deterministic injected-transport tests cover ambiguity, selected refs, stale IDs, area trust, Unicode, schemas, request caps, redaction, and the resolution-only journey seam. Primary independently verified bounded production location search and ambiguity behavior without credential echo; details are in validation.md.
