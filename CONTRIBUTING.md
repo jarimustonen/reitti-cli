@@ -6,8 +6,6 @@ Thank you for helping improve `reitti`, an agent-first command-line journey plan
 
 For a bug or feature proposal, first open a [GitHub issue](https://github.com/jarimustonen/reitti-cli/issues) so the intended behavior and scope can be agreed before substantial work begins. Do not disclose vulnerabilities publicly; follow [SECURITY.md](SECURITY.md) instead.
 
-This repository is currently private and in early development. These instructions describe the contribution path to use when access is available and remain valid when the repository becomes public.
-
 ## Development setup
 
 Install the stable Rust toolchain, including the `rustfmt` and `clippy` components, then clone the repository. From the workspace root, run:
@@ -16,7 +14,7 @@ Install the stable Rust toolchain, including the `rustfmt` and `clippy` componen
 cargo build --workspace
 ```
 
-Do not commit credentials. Live Digitransit access requires a subscription key; follow the repository's API-access documentation and supply secrets through the supported runtime configuration once that interface is implemented.
+Do not commit credentials. Live Digitransit access requires a subscription key; follow [the API-access guide](docs/digitransit-api-access.md) and provide the key through a protected environment or `config update --subscription-key-stdin`.
 
 ## Make a change
 

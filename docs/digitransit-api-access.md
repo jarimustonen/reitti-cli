@@ -15,14 +15,26 @@ Portal labels can change. Digitransit's [API portal and registration guide](http
 
 ## Configure `reitti`
 
-Set the primary key in the environment before invoking the CLI:
+Store the key without putting it in command arguments or shell history. If you already use a secret manager, have it write one line to `reitti config update --subscription-key-stdin`. No particular secret manager is required.
+
+Without one, use this Bash-compatible hidden-input wrapper on macOS or Linux:
+
+```bash
+read -rsp 'Digitransit subscription key: ' key; printf '\n'
+printf '%s\n' "$key" | reitti config update --subscription-key-stdin
+unset key
+```
+
+The `reitti` process itself stays non-interactive: the caller supplies exactly one line on stdin. Confirm the saved value is redacted and run local diagnostics:
 
 ```sh
-export DIGITRANSIT_SUBSCRIPTION_KEY='fictional-primary-key-from-the-portal'
+reitti --json config show
 reitti doctor
 ```
 
-Use your shell's secret-management facility for persistent setup. Do not put a real key in a repository `.env` example, command-line argument, URL, log, issue, chat message, screenshot, or test fixture. Never commit or paste a key. `reitti` sends the value in the `digitransit-subscription-key` HTTP header, not in the URL.
+Use `reitti doctor --online` only when you intend to make bounded API probes.
+
+For short-lived automation, provide `DIGITRANSIT_SUBSCRIPTION_KEY` through the automation system's protected environment rather than an `export` command copied into shell history. Do not put a real key in a repository `.env` example, command-line argument, URL, log, issue, chat message, screenshot, or test fixture. Never commit or paste a key. `reitti` sends the value in the `digitransit-subscription-key` HTTP header, not in the URL.
 
 ## Primary and secondary keys
 

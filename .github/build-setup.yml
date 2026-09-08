@@ -20,4 +20,7 @@
     }
     append_flag "--remap-path-prefix=${HOME}=/build/home"
     append_flag "--remap-path-prefix=${GITHUB_WORKSPACE}=/build/source"
+    commit="$(git rev-parse HEAD)"
+    [[ "$commit" =~ ^[0-9a-f]{40}$ ]]
     printf 'CARGO_ENCODED_RUSTFLAGS=%s\n' "$encoded" >> "$GITHUB_ENV"
+    printf 'REITTI_BUILD_COMMIT=%s\n' "$commit" >> "$GITHUB_ENV"

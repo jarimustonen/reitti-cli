@@ -16,4 +16,4 @@ Project maintainers may edit, hide, lock, or remove content; limit participation
 
 For abuse occurring on GitHub, use GitHub's **Report content** or **Report abuse** action on the relevant comment, issue, pull request, or account. This sends the report through GitHub's established abuse-handling process. Do not repost harassment or personal information in a new public issue.
 
-The project does not yet publish a separate private conduct-reporting address. Before the repository is made public, the maintainers must establish and document a private maintainer contact for conduct concerns that GitHub's reporting tools do not cover. Until then, people with private repository access should use an existing private collaboration channel to reach a repository administrator without exposing sensitive details.
+The project does not publish a separate conduct-reporting address. For concerns that GitHub's reporting tools do not cover, contributors with an existing private collaboration channel may contact a repository administrator there without reposting sensitive details.

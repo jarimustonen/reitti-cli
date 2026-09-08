@@ -35,6 +35,7 @@ pub struct Cli {
     /// Freeze the injected clock for tests only.
     #[arg(long, global = true, hide = true, value_name = "RFC3339")]
     pub frozen_time: Option<String>,
+    /// Show help for the root or selected command.
     #[arg(long, global = true)]
     pub help: bool,
     #[command(subcommand)]

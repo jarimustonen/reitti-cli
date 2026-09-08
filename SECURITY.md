@@ -4,15 +4,11 @@
 
 Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.
 
-### While the repository is private
+The repository is currently private. A direct check of GitHub's Private Vulnerability Reporting endpoint returned 404 in that state, so this document does not claim that a private reporting form is available. Authorized collaborators should contact a repository administrator through an existing private collaboration channel. Do not place sensitive details in an ordinary issue.
 
-Access is restricted, and GitHub Private Vulnerability Reporting is not currently available for this repository. Authorized collaborators should contact a repository administrator through an existing private collaboration channel. The project does not publish a fallback security email, so do not place sensitive details in a public or ordinary issue.
+When the repository becomes public, a maintainer should enable and verify GitHub Private Vulnerability Reporting under **Settings → Code security** before announcing the public release. Once the repository's **Security** tab shows **Report a vulnerability**, use that form. GitHub documents the process in [Privately reporting a security vulnerability](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
 
-### Before and after publicization
-
-Before changing repository visibility, a maintainer must enable and verify GitHub Private Vulnerability Reporting. Once the repository's **Security** tab shows **Report a vulnerability**, use that private form. GitHub documents the process in [Privately reporting a security vulnerability](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
-
-The publicization check must update this section if the reporting channel differs. The presence of this document alone does not prove that the GitHub setting is enabled.
+If the expected private form is unavailable after publicization, use GitHub's repository-owner contact or abuse-reporting channels to request a private route without posting vulnerability details publicly. The project does not invent or publish a personal security address for this purpose.
 
 Include, as far as you can:
 
@@ -26,18 +22,18 @@ The maintainers will acknowledge the report as soon as practical, assess it, and
 
 ## Scope
 
-The most relevant security surfaces are:
+The main security surfaces are:
 
-- HTTPS requests to Digitransit services and parsing their responses;
-- handling a user-supplied Digitransit subscription key;
+- HTTPS requests to Digitransit and parsing untrusted provider responses;
+- local handling of a user-supplied Digitransit subscription key;
 - parsing command-line and configuration input; and
-- downloadable executables and installers published with future GitHub Releases.
+- downloadable executables and installers published through GitHub Releases.
 
-The current implementation is an early placeholder. This policy describes the intended v1.0 surface without claiming that release binaries or a production service exist today.
+The CLI sends credentials only in the `digitransit-subscription-key` request header, redacts them from ordinary configuration output and diagnostics, rejects redirects, and bounds provider response processing. Security reports should still cover any observed failure of those controls.
 
 ## Supported versions
 
-No supported version has been released yet. Once v1.0 is available, the latest release will receive security fixes. This section will be updated if support expands to additional release lines.
+No GitHub Release has been published yet. After v1.0.0 is released, the latest release will receive security fixes. This section will be updated if support expands to additional release lines.
 
 ## Safe harbor
 
