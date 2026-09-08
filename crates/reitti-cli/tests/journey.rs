@@ -490,6 +490,7 @@ fn routing_domain_errors_with_results_warn_but_empty_and_transport_fail_distinct
     );
     assert_eq!(exit, 0);
     let document = parse(&stdout);
+    assert_eq!(document["data"]["complete"], false);
     let warning = document["warnings"]
         .as_array()
         .unwrap()

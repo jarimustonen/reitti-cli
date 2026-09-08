@@ -301,6 +301,7 @@ pub fn execute(
         )
     })?;
     let complete = provider_complete
+        && routing_errors.is_empty()
         && excluded_over_limit == 0
         && excluded_over_cap == 0
         && excluded_unknown_distance == 0;
@@ -828,7 +829,7 @@ fn journey_text(
                     .unwrap_or(&alert.description);
                 lines.push(format!(
                     "    {}: {}",
-                    alert.id,
+                    crate::command::escape_text(&alert.id),
                     crate::command::escape_text(summary)
                 ));
             }

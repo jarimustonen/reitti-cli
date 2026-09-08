@@ -23,7 +23,9 @@ The adjusted resolver integration assertions in `crates/reitti-cli/tests/locatio
 
 ## Validation
 
-Local full test suite passed after implementation: 61 tests total (21 CLI library unit, 20 CLI contract, 9 journey integration, 1 live-context integration, 7 location integration, 3 core unit) plus doc tests.
+The implementation checkpoint and final local suite contain 61 tests (21 CLI library unit, 20 CLI contract, 9 journey integration, 1 live-context integration, 7 location integration, 3 core unit) plus doc tests. Focused journey regressions include cancelled/interlined alert rendering, normalization-cap warnings, and provider over-return bounding.
+
+Primary exported tracked checkpoint `c962e28` without `.git` or ignored files and ran `cargo test --locked --workspace` in a disposable Linux ARM64 Podman container using official `rust:1.88-bookworm`. The whole suite passed; the container was removed and no host toolchain changed. This independently validates the checkpoint on the declared MSRV/Linux target from a source archive. It does not establish GitHub Actions success; hosted CI remains blocked by the separately reported account billing restriction.
 
 Primary supplied pre-final-draft live evidence without exposing credentials to this worktree:
 
@@ -32,3 +34,7 @@ Primary supplied pre-final-draft live evidence without exposing credentials to t
 - UTC text mode: heading and leg times used one timezone, estimates showed scheduled/delay evidence, platform/headsign and a real service alert were visible.
 
 These are recorded as primary pre-final-draft smoke evidence, not this worker's credentialed validation or final release acceptance. Final credentialed smoke remains primary-owned.
+
+## Review evidence
+
+The required advisory request targeted `claude-fable-5` and `deepseek-v4-pro` for one round and included every new test artifact. It emitted no response and was cancelled by primary after more than 20 minutes; neither model is claimed to have passed or failed the code, and there was no partial output to assess. `history/review-ranked-journeys.md` accurately records the unavailable advisory result and the five source-backed primary findings. `history/assessment-ranked-journeys.{json,md}` classifies all five as confirmed fixes and verifies them against current source/tests. No speculative residual issue was filed.
