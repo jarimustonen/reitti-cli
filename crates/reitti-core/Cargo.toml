@@ -1,0 +1,6 @@
+# Pure-domain crate: no clap, no I/O (§22). The CLI edge depends on this.
+[package]
+name = "reitti-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true

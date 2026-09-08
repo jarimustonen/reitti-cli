@@ -1,0 +1,9 @@
+# reitti workspace — §22 core/cli split (the AI-first CLI family's canonical shape).
+[workspace]
+resolver = "2"
+members = ["crates/reitti-core", "crates/reitti-cli"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
