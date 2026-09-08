@@ -3,12 +3,14 @@ created: 2026-09-08
 updated: 2026-09-08
 type: chore
 reporter: jarimustonen
-status: open
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: release
 lane_seq: 10
 blocked_by: ['@ship-agent-skill', '@prepare-oss-foundations']
+closed: 2026-09-08
+closed_by: codex
 ---
 
 # Package and verify the v1.0 release
@@ -17,12 +19,12 @@ blocked_by: ['@ship-agent-skill', '@prepare-oss-foundations']
 
 Produce a reproducible and documented first release after all user-facing capabilities are complete.
 
-## Acceptance criteria
+## Acceptance Criteria
 
-- README contains installation, key registration, quickstart, supported municipalities, privacy, attribution, and independence statements.
-- Release artifacts cover macOS arm64 and Linux arm64/x86_64 with checksums and provenance.
-- Clean-machine smoke tests exercise help, doctor, configuration, location search, journey planning, departures, disruptions, and skill installation.
-- The version is tagged `v1.0.0` only after all epic success criteria and release checks pass.
+- [x] README contains installation, key registration, quickstart, supported municipalities, privacy, attribution, and independence statements.
+- [x] Release artifacts cover macOS arm64 and Linux arm64/x86_64 with checksums and provenance.
+- [x] Clean-machine smoke tests exercise help, doctor, configuration, location search, journey planning, departures, disruptions, and skill installation.
+- [x] The version is tagged `v1.0.0` only after all epic success criteria and release checks pass.
 
 ## Decisions
 
@@ -46,3 +48,9 @@ Ordinary push and pull-request GitHub CI is intentionally absent. Remove the bro
 ### Maintainer authorization: public v1.0.0 publication
 
 On 2026-09-08 the maintainer explicitly requested README refinements, crates.io and Homebrew as the first installation channels, Code of Conduct removal, public GitHub visibility, and publication. This supersedes the earlier private-preparation boundary. Publish core then CLI to crates.io; cargo-dist owns GitHub assets and the Homebrew formula so the formula correctly installs binary `reitti` from `reitti-cli` archives. Preserve the three platforms, macOS self-hosted runner, local gates, and absence of ordinary CI. Use existing SOPS-managed release credentials only through process environment or GitHub secret input; never persist decrypted values.
+
+## Resolution
+
+### 2026-09-08T15:15:16Z · @codex
+
+Published v1.0.0 to crates.io, GitHub Releases and Homebrew. All release jobs, three artifact attestations, Cargo/Homebrew installation and public shell installation on all three platforms verified. See acceptance.md for exact source and evidence.

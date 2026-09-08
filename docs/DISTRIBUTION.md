@@ -60,7 +60,14 @@ After changing `distribution` in `OSS-RELEASE.md`:
 6. smoke-test every executable and the shell installer's platform selection in disposable homes; and
 7. inspect the actual tag-triggered GitHub release workflow before claiming release jobs or attestations passed.
 
-GitHub artifact attestations remain configured as the contract's desired keyless provenance. Private/internal repositories require GitHub Enterprise Cloud for attestations, and this repository's capability has not been verified. If an actual private release run cannot attest, report that limitation rather than claiming provenance that was not produced. Checksums and the exact build commit remain mandatory evidence; do not introduce an unapproved signing system.
+The public v1.0.0 release produced GitHub artifact attestations for all three binary archives. Verify a downloaded archive against this repository before using it:
+
+```sh
+gh attestation verify reitti-cli-aarch64-apple-darwin.tar.xz \
+  --repo jarimustonen/reitti-cli
+```
+
+Substitute the matching Linux archive when appropriate. Check that the verified source commit matches the release tag; retain checksum verification as well. The [v1.0.0 release run](https://github.com/jarimustonen/reitti-cli/actions/runs/34242521413) completed all build, attestation, asset-publication, and Homebrew steps successfully. Its macOS job used the required self-hosted runner.
 <!-- shipshape-dist:managed:end -->
 
 ## Release boundary

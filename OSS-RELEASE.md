@@ -39,7 +39,7 @@ docs_site: none
 - **Distribution: cargo-dist via GitHub Releases** — future releases provide binaries for macOS arm64 and Linux arm64/x86_64 plus a shell installer. Intel macOS and Windows are intentionally unsupported.
 - **Versioning and release: SemVer, gated, single** — the first intended stable release is v1.0. A maintainer explicitly initiates every release; this contract does not authorize automatic publication.
 - **Changelog: curated from issuectl trailers** — maintainers select user-facing entries from the repository's issue-linked commits.
-- **Provenance: keyless** — the generated GitHub release automation requests artifact attestations. Capability must be established by an actual workflow run; private/internal repositories require GitHub Enterprise Cloud. Checksums and the binary's exact source commit remain required evidence regardless.
+- **Provenance: keyless** — the public v1.0.0 release produced verified GitHub artifact attestations for all three binary archives. Checksums and the binary's exact source commit remain required evidence for every release.
 - **License: MIT** — the workspace manifest declares MIT, matching the planned public license in `README.md`.
 - **Documentation and health signals** — no separate docs site is planned, and only the license badge is enabled. Ordinary push and pull-request CI is intentionally absent by maintainer decision; dependency automation is also undeclared.
 

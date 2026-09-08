@@ -3,8 +3,10 @@ created: 2026-09-08
 updated: 2026-09-08
 type: epic
 owner: jarimustonen
-status: open
+status: done
 priority: high
+closed: 2026-09-08
+closed_by: codex
 ---
 
 # v1.0 agent journey planner
@@ -25,6 +27,10 @@ The supported HSL area is Helsinki, Espoo, Vantaa, Kauniainen, Kerava, Kirkkonum
 - The CLI ships a synchronized companion Agent Skill and passes unit, contract, integration, and end-to-end tests.
 - A reproducible v1.0 release can be installed and run on macOS and Linux.
 
+## Acceptance Criteria
+
+- [x] All success criteria are satisfied by the implemented CLI and verified public v1.0.0 release; see [release acceptance](../release-v1/acceptance.md).
+
 ## Scope
 
 Included: HSL router journey planning, geocoding, stop discovery and departures, relevant realtime status and disruptions, configuration/authentication, ranked alternatives, agent documentation, packaging, and release verification.
@@ -41,7 +47,7 @@ Excluded from v1.0: ticket purchase, account-specific HSL data, a graphical map 
 - [x] @plan-ranked-journeys — compare and explain route alternatives
 - [x] @expose-live-transit-context — expose departures and disruptions
 - [x] @ship-agent-skill — package the agent operating workflow
-- [ ] @release-v1 — verify and publish v1.0
+- [x] @release-v1 — verify and publish v1.0
 
 ## Phases
 
@@ -68,3 +74,9 @@ The user explicitly requires primary-agent ownership of quality: independently r
 ### 2026-09-08T13:04:57Z · @codex
 
 The maintainer explicitly requires independent judgment of review findings. External model reviews are advisory proposals: assess them against source and supported behavior, fix material confirmed problems, and reject speculative machinery or automatic residual-issue filing. Use one proportionate independent pass without cross-review or zero-findings loops. An external review timeout is disclosed as unavailable evidence, not a passed review or an automatic reason to discard an otherwise independently validated deliverable. Repository validation gates remain required.
+
+## Resolution
+
+### 2026-09-08T15:15:16Z · @codex
+
+Implemented and publicly released v1.0.0, including the CLI, configuration/onboarding, bundled Agent Skill, documentation, crates.io packages and verified macOS/Linux distribution. The maintainer explicitly authorized public visibility and publication after the initial private preparation.
