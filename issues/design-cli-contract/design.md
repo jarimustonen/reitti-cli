@@ -287,7 +287,8 @@ Every provider-backed `data` object contains:
 `request_id` is locally generated and injectable in tests; it is correlation,
 not provider provenance. Geocoding uses product `geocoding-v1` and
 `realtime_included: false`. Mixed journey resolution uses a top-level `sources`
-array in first-use order. Endpoint URLs and credential presence are config and
+array in request order, retaining one record per performed provider request
+even when products or injected timestamps coincide. Endpoint URLs and credential presence are config and
 diagnostic facts, not data provenance, and are not emitted in ordinary results.
 
 ## 5. Domain objects
