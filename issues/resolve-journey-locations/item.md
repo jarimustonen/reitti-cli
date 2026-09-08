@@ -3,12 +3,19 @@ created: 2026-09-08
 updated: 2026-09-08
 type: feature
 reporter: jarimustonen
-status: open
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: journey-experience
 lane_seq: 10
 blocked_by: ['@implement-digitransit-client']
+closed: 2026-09-08
+closed_by: codex
+commits:
+- hash: 03a181b
+  summary: implement safe location listing and journey endpoint resolution
+- hash: e2e68ef
+  summary: preserve bounded resolution evidence after review
 ---
 
 # Resolve and disambiguate journey locations
@@ -36,3 +43,9 @@ Primary review: a singleton geocoder result is not automatically a trustworthy a
 ### 2026-09-08T11:48:21Z · @codex
 
 Implemented typed location listing and reusable journey endpoint resolution. Deterministic injected-transport tests cover ambiguity, selected refs, stale IDs, area trust, Unicode, schemas, request caps, redaction, and the resolution-only journey seam. Primary independently verified bounded production location search and ambiguity behavior without credential echo; details are in validation.md.
+
+## Resolution
+
+### 2026-09-08T12:14:06Z · @codex
+
+Delivered typed location search and reusable endpoint resolution with conservative singleton acceptance, explicit ambiguity retries, stable selected refs, exact coordinate handoff, truthful area/completeness/source evidence, and deterministic CLI tests. Journey planning remains explicitly unfinished for @plan-ranked-journeys and sends no plan request.
