@@ -32,6 +32,15 @@ impl AppError {
         }
     }
 
+    pub fn credential_missing() -> Self {
+        Self::caller(
+            "credential_missing",
+            "Digitransit subscription key is missing. An agent can read the bundled setup instructions with `reitti skill print reitti` (section `Correct failures`).",
+        )
+        .with_detail("guidance_command", "reitti skill print reitti")
+        .with_detail("guidance_section", "Correct failures")
+    }
+
     pub fn with_detail(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
         self.details.insert(key.into(), value.into());
         self

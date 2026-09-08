@@ -895,6 +895,26 @@ fn all_domain_default_invocations_require_credentials_before_provider_io() {
             "args={args:?}, stderr={}",
             String::from_utf8_lossy(&output.stderr)
         );
-        assert!(String::from_utf8_lossy(&output.stderr).contains("credential_missing"));
+        let error: Value = serde_json::from_slice(&output.stderr).unwrap();
+        assert_eq!(error["error"]["code"], "credential_missing");
+        assert!(error["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("reitti skill print reitti"));
+        assert_eq!(
+            error["error"]["details"]["guidance_command"],
+            "reitti skill print reitti"
+        );
+        assert_eq!(
+            error["error"]["details"]["guidance_section"],
+            "Correct failures"
+        );
     }
+
+    let text = reitti(home.path())
+        .args(["location", "list", "--query", "Kamppi"])
+        .output()
+        .unwrap();
+    assert_eq!(text.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&text.stderr).contains("reitti skill print reitti"));
 }

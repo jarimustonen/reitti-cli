@@ -505,7 +505,7 @@ fn validate_overrides(overrides: &GlobalOverrides) -> Result<(), AppError> {
 fn require_credential(overrides: &GlobalOverrides) -> Result<config::EffectiveConfig, AppError> {
     let config = config::load(overrides)?;
     if config.subscription_key.is_none() {
-        Err(AppError::caller("credential_missing", "Digitransit subscription key is missing. Set DIGITRANSIT_SUBSCRIPTION_KEY or pipe one line to reitti config update --subscription-key-stdin."))
+        Err(AppError::credential_missing())
     } else {
         Ok(config)
     }

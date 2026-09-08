@@ -130,12 +130,7 @@ fn router<'a>(context: &'a HandlerContext<'a>) -> Result<DigitransitRouter<'a>, 
         .config
         .subscription_key
         .as_ref()
-        .ok_or_else(|| {
-            AppError::caller(
-                "credential_missing",
-                "Digitransit subscription key is missing.",
-            )
-        })?
+        .ok_or_else(AppError::credential_missing)?
         .0
         .expose()
         .to_owned();
