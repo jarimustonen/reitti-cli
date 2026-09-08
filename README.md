@@ -35,7 +35,7 @@ The release plan produces checksum-protected archives for:
 - Linux arm64 (static musl): `reitti-cli-aarch64-unknown-linux-musl.tar.xz`
 - Linux x86_64 (static musl): `reitti-cli-x86_64-unknown-linux-musl.tar.xz`
 
-Each archive has a matching `.sha256` file, and the release includes `sha256.sum`. Verify the checksum before installing `reitti` from an archive. Intel macOS and Windows do not have prebuilt v1 binaries.
+Each archive has a matching `.sha256` file, and the release includes `sha256.sum`. Verify the checksum before installing `reitti` from an archive. Other architectures and operating systems are unsupported in v1.
 
 ### Build from source
 
