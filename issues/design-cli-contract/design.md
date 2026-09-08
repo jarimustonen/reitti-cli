@@ -701,8 +701,12 @@ The config file is TOML at:
 
 `REITTI_CONFIG_FILE` may select an explicit absolute config path. Relative paths,
 an empty XDG variable, insecure file type, and symlinked credential files are
-rejected rather than guessed through. Parent directory and created file modes
-are 0700 and 0600 on Unix. Writes are lock-protected and atomic.
+rejected rather than guessed through. First-time setup creates missing default/XDG
+config directories with mode 0700 and the credential file with mode 0600 on Unix;
+it never changes permissions on pre-existing HOME or shared config directories.
+A pristine HOME without `.config` must support the normal onboarding command.
+Writes are atomic and use a regular, securely opened lock file with nonblocking
+conflict reporting; another writer must not cause an indefinite wait.
 
 Persistent key precedence is resolved independently:
 
