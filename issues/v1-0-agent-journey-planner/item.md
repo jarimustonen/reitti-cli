@@ -40,7 +40,7 @@ Excluded from v1.0: ticket purchase, account-specific HSL data, a graphical map 
 - [x] @resolve-journey-locations — make endpoint resolution safe and retryable
 - [x] @plan-ranked-journeys — compare and explain route alternatives
 - [x] @expose-live-transit-context — expose departures and disruptions
-- [ ] @ship-agent-skill — package the agent operating workflow
+- [x] @ship-agent-skill — package the agent operating workflow
 - [ ] @release-v1 — verify and publish v1.0
 
 ## Phases
