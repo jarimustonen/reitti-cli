@@ -1,0 +1,236 @@
+# issuectl frontmatter schema (v1) — auto-generated; safe to edit and commit.
+#
+# Each field declares whether it is required and (optionally) an `enum`
+# of allowed values. Declare a custom field below to make `doctor` and
+# the mutation commands enforce it.
+#
+# - `required: true`   → an issue missing this field fails validation.
+# - `enum: [a, b, c]`  → only those values are accepted.
+# - `list: true`       → field is a list; `enum` applies element-wise.
+#
+# Merge semantics: this file is layered on top of the built-in default
+# schema. To override a built-in field, redeclare it here (your full
+# `FieldSpec` replaces the built-in one). To add a custom field, just
+# add an entry. Unknown fields in an issue are NOT errors, so agents
+# can attach extra metadata freely.
+#
+# `created` is intentionally NOT required by default — repos that
+# pre-date schema enforcement may have issues without it. Set it to
+# `required: true` once you are sure all issues have it (run
+# `issuectl doctor` first).
+version: 1
+fields:
+  type:
+    required: true
+    enum: [bug, task, feature, improvement, chore, epic]
+  status:
+    required: true
+    enum:
+      - open
+      - in-progress
+      - testing
+      # Intake-flow reception/holding states. All active-class: the
+      # binary has only `active | closing`, and the design keeps
+      # `deferred` active rather than adding a `parked` class.
+      - untriaged
+      - deferred
+      - needs-info
+      - done
+      - fixed
+      - wontfix
+      - duplicate
+      - cannot-reproduce
+      - obsolete
+  priority:
+    required: true
+    enum: [low, normal, high]
+  created:
+    required: false
+  updated:
+    required: false
+  reporter:
+    required: false
+  assignee:
+    required: false
+  owner:
+    required: false
+  reviewer:
+    required: false
+  review_status:
+    required: false
+    enum: [requested, in-review, approved, changes-requested]
+  # Lightweight estimates. Declare either `size` OR `estimate` on an
+  # issue, not both — the schema can't express the mutual-exclusion
+  # rule directly, but `issuectl workload` / `burndown` will flag any
+  # issue carrying both. `size` is a fixed four-value enum; `estimate`
+  # is a free-form numeric (story points) and is intentionally NOT
+  # declared here because the v1 schema validator is string-typed and
+  # would reject `estimate: 5` (a YAML number). Unknown fields pass
+  # validation, so the numeric form rides through. See
+  # `crates/issuectl-core/src/estimate.rs`.
+  size:
+    required: false
+    enum: [S, M, L, XL]
+  epic:
+    required: false
+  related:
+    required: false
+    list: true
+  blocked_by:
+    required: false
+    list: true
+  labels:
+    required: false
+    list: true
+    # enum: [infra, frontend, backend]   # uncomment to constrain labels
+  closed:
+    required: false
+    # `closed:` is conditionally required: any issue whose status is
+    # classified `closing` (see `status_classes` below) must carry a
+    # `closed:` date. Declared here so schema validation and `doctor`
+    # enforce the same lifecycle rule instead of leaving it implicit.
+    required_when:
+      status_class: closing
+  # Closer attribution, managed in lockstep with `closed:` (set on close,
+  # scrubbed on reopen). Declared so it is a first-class known field —
+  # schema validation and `doctor`'s unknown-key check recognise it — not
+  # to make it required. The only writer is the validated close-lifecycle
+  # slot; `set`/`update --field` reject it as reserved.
+  closed_by:
+    required: false
+  # Scheduling-DAG fields (see `issuectl dag`). Both optional and
+  # absent-by-default; declared here so schema validation and `doctor`'s
+  # unknown-key check recognise them as first-class known fields. `lane`
+  # is a scalar scheduling group; `collision` is a list of extra hot-file
+  # tokens. The only writers are `update --lane` / `--add-collision`
+  # (reserved from `set`/`update --field`).
+  lane:
+    required: false
+  collision:
+    required: false
+    list: true
+  slug:
+    required: false
+  # --- Intake-flow fields -------------------------------------------
+  # NOTE: the v1 schema validates each field in isolation — it cannot
+  # express cross-field invariants. So these declarations do NOT enforce
+  # that `deferred_until`/`duplicate_of`/`disposition_reason` line up
+  # with `status` (e.g. `duplicate_of` only on a `duplicate` item,
+  # `disposition_reason` only on a closing status, `deferred_until` only
+  # while `deferred`), nor date/slug *formats* (dates ride as strings,
+  # exactly like `closed:`). Those invariants are the intake mutation
+  # commands' job in a later unit; this unit only declares the fields
+  # exist and constrains the one closed enum (`disposition_reason`).
+  #
+  # Where the report came from. First-class field (distinct from the
+  # body `--source` line). The accepted value set is CONFIGURABLE PER
+  # REPO: no `enum:` ships by default, so any source string is accepted
+  # until a repo narrows it — declare an `enum:` here (e.g.
+  # `[chat, email, github, other]`) to constrain and validate it.
+  # Pair with `provenance_detail` free text for the open-ended `other`
+  # case.
+  provenance:
+    required: false
+  provenance_detail:
+    required: false
+  # Structured reason for a closing disposition, so "by-design rate"
+  # vs "resource starvation" is queryable rather than buried in prose.
+  # Extend the enum per repo as new reasons appear; pair with the
+  # free-text `disposition_note` for specifics.
+  disposition_reason:
+    required: false
+    enum: [by-design, out-of-scope, wontfix, withdrawn, superseded]
+  disposition_note:
+    required: false
+  # Directed link to the canonical item for a `duplicate` disposition
+  # (a slug reference).
+  duplicate_of:
+    required: false
+  # External identity of the source report (e.g. `chat:123/message:456`),
+  # the idempotency key for filing.
+  source_ref:
+    required: false
+  # Wake-up date for a `deferred` item so parked work is not a
+  # graveyard. Stored as a string date, like `closed:`.
+  deferred_until:
+    required: false
+  # --- Agent workflow provenance -----------------------------------
+  # Metadata written by the issuectl intake/review workflow contract.
+  # These remain optional string fields in `Issue.extra` rather than typed
+  # `Issue` fields, preserving their existing canonical token projection.
+  # The workflow writes them through `--field key=value`; enums are omitted
+  # deliberately because reviewer vocabularies, value casing, and orchestrator
+  # run kinds evolve independently. `review_source` is the stable review-origin
+  # marker consumers query, while intake `provenance` above remains the
+  # repo-configurable source classification and may reject `ai-review`.
+  review_source:
+    required: false
+  originating_run:
+    required: false
+  originating_run_kind:
+    required: false
+  review_target:
+    required: false
+  assessment_classification:
+    required: false
+  assessment_outcome:
+    required: false
+  review_severity:
+    required: false
+  review_confidence:
+    required: false
+  # `commits` is intentionally not declared: it is a list of mapping
+  # entries (`{hash, summary}`), which the v1 schema's scalar/list-of-
+  # string model cannot describe. Unknown fields are allowed, so it
+  # passes validation either way.
+
+# Lifecycle classification for status values. Built-in statuses
+# (`open`, `in-progress`, `testing`, `untriaged`, `deferred`,
+# `needs-info` → active; `done`, `fixed`, `wontfix`, `duplicate`,
+# `cannot-reproduce`, `obsolete` → closing) are classified
+# automatically. Add a status's class here to extend the taxonomy with
+# a custom status (e.g. `archived`), or to *override* a built-in
+# (e.g. `done: active` if your workflow treats `done` as in-progress).
+# Closing statuses get the `closed:` stamp, end up in the closed
+# bucket, and pass doctor's open/closed consistency check the same way
+# `done` does.
+#
+# status_classes:
+#   archived: closing
+#   verified: active
+
+# Definition-of-Done applies only to delivery-signifying closing statuses.
+# The default delivery statuses are `done` and `fixed`; non-delivery closes
+# (`wontfix`, `duplicate`, `cannot-reproduce`, `obsolete`) stay ungated.
+# Replace `delivery_statuses` to include a custom closing status. This list
+# replaces (does not extend) the default; restate `done` and `fixed` to retain
+# them. A listed status must also be in `fields.status.enum` and resolve to
+# `closing` through `status_classes` (or the built-in fallback). An explicit
+# empty list disables transition-time DoD checks.
+#
+# dod:
+#   strict: false
+#   delivery_statuses: [done, fixed, shipped]
+
+# Legacy-value aliases for `doctor --fix` migration. When an issue's
+# `status` or `type` equals a key below, `doctor --fix` rewrites it to
+# the mapped canonical value (and, for a status that becomes a closing
+# status, stamps a `closed:` date if one is missing). Built-in defaults
+# cover the most common pre-0.5.1 values surfaced in migration feedback;
+# add your own to extend, or restate a key to override its target. Only
+# `doctor --fix` consumes this map — the regular mutation commands still
+# reject out-of-enum values, so an unaliased typo never slips through.
+#
+# Only unambiguous synonyms are built in. Work-pause states such as
+# `paused` / `blocked` are deliberately NOT mapped: the canonical status
+# set has no equivalent, so coercing them to `in-progress` would
+# misrepresent intent and lose information. A repo that wants them
+# handled should add its own mapping (or a custom status via
+# `status_classes`) below.
+status_aliases:
+  closed: done
+  resolved: fixed
+  in_progress: in-progress
+type_aliases:
+  enhancement: improvement
+  refactor: chore

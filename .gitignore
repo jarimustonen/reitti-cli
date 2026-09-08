@@ -1,0 +1,10 @@
+history/
+/target/
+.env
+*.log
+.DS_Store
+
+# Per-process issuectl locks and generated context cache
+.issuectl/lock
+.issuectl/write.lock
+.issuectl/cache/

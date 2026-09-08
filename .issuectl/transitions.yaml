@@ -1,0 +1,48 @@
+# issuectl status-transition rules (v1) — auto-generated; safe to edit and commit.
+#
+# `allowed_from` is a whitelist: when set, a transition into that status
+# from any source NOT listed is rejected (default-deny). `forbidden_from`
+# is a blacklist applied on top. `requires_assignee` / `requires_commits` /
+# `requires_acceptance_criteria_checked` add stricter per-status gates —
+# none ship by default; add them to encode project policy.
+#
+# Delete this file to fall back to fully-lenient transitions (the intake
+# mutations still enforce their intrinsic source-state invariants).
+version: 1
+status_rules:
+  # --- Intake reception / holding states -------------------------------
+  # Re-entered by a reporter reply (needs-info → untriaged) or by
+  # reopening a closed item. NOT reachable from an in-flight state —
+  # that would silently un-work an issue.
+  untriaged:
+    allowed_from: [needs-info, fixed, done, wontfix, duplicate, cannot-reproduce, obsolete]
+  needs-info:
+    allowed_from: [untriaged, deferred, open]
+  deferred:
+    allowed_from: [untriaged, needs-info, open]
+  # --- Development flow -------------------------------------------------
+  # Start from the backlog, or rework after a failed verification. Denies
+  # "start work from untriaged" and "start from parked (deferred)".
+  in-progress:
+    allowed_from: [open, testing]
+  testing:
+    allowed_from: [in-progress]
+  # --- Closing dispositions --------------------------------------------
+  # Completion statuses come from the dev flow (including a direct `close`
+  # of an `open` item) — never from an untriaged/parked item, which must
+  # be dispositioned via `intake reject|duplicate|obsolete|…`, not
+  # silently "fixed"/"done".
+  fixed:
+    allowed_from: [open, in-progress, testing]
+  done:
+    allowed_from: [open, in-progress, testing]
+  # Intake exits: reachable from any intake/holding state and from the
+  # backlog (an accepted item can still be dropped or found to be a dup).
+  wontfix:
+    allowed_from: [untriaged, needs-info, deferred, open, in-progress, testing]
+  duplicate:
+    allowed_from: [untriaged, needs-info, deferred, open]
+  cannot-reproduce:
+    allowed_from: [untriaged, needs-info, deferred, open]
+  obsolete:
+    allowed_from: [untriaged, needs-info, deferred, open]

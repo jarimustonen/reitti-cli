@@ -1,0 +1,6 @@
+# workmux project configuration
+# For global settings, edit ~/.config/workmux/config.yaml
+
+# Match the tw-command emoji prefix (projects.conf) so workmux windows
+# blend in with `tw dev` windows.
+window_prefix: "🚌 "
