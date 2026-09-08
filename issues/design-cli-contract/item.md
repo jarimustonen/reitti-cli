@@ -58,3 +58,9 @@ Primary-agent design review addressed: offline-by-default doctor and exit mappin
 ## Reopen Notes — 2026-09-08
 
 Reopened for primary-agent review corrections before implementation: offline diagnostics, honest coordinate scope, raw stop IDs in typed positions, navigation detail, alert relevance, arithmetic, retry semantics, schema IDs, and incidental-surface reduction.
+
+## Decisions
+
+### 2026-09-08T08:11:27Z · @codex
+
+Primary-agent final review directly amended the implementation contract using production-schema evidence: boolean wheelchair-aware routing rather than an unsupported hard guarantee; max walking as an explicit local cap over bounded candidates; authoritative provider alert IDs and itinerary transfer/walk/wait metrics; nondeprecated stopCalls and navigation fields. Transit-leg-count minus one is wrong for stay-seated interlining. Earlier primary corrections (offline doctor, raw stop IDs, honest unknown coordinate coverage, alert relevance union, geometry bounds, corrected comparison labels) were incorporated by the worker. The final schema evidence is recorded under @implement-digitransit-client.

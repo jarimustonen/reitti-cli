@@ -7,7 +7,8 @@
 
 This document is the implementation boundary for the v1 issues under
 @v1-0-agent-journey-planner. Provider details are grounded in
-@validate-data-contracts and its credential-free fixtures. The public surface is
+@validate-data-contracts and its credential-free fixtures, plus the primary
+agent's [production-schema validation](../implement-digitransit-client/validation.md). The public surface is
 small on purpose: location resolution, journey planning, stop discovery and
 live context compose through stable references rather than hidden session state.
 
@@ -45,7 +46,7 @@ One CLI invocation performs at most the following provider requests:
 |---|---:|---|
 | `location search` | 1 | one geocoding search |
 | `stop search` | 1 | one bounded Routing v2 stop query |
-| `journey plan` | 3 | at most one lookup for each `query:`/`place:` endpoint, then one plan query; `coord:` adds no lookup |
+| `journey plan` | 3 | at most one lookup for each `query:`/`place:`/`stop:` endpoint, then one plan query; `coord:` adds no lookup |
 | `stop departures` | 1 | one bounded Routing v2 stop query |
 | `alert list` | 1 | one Routing v2 alert query, filtered and capped locally if needed |
 | `doctor` | 0 offline / 2 online | local checks by default; `--online` adds one minimal geocoding and one Routing v2 probe |
@@ -66,7 +67,7 @@ Canonical synopsis (brackets mean optional syntax, not literal characters):
 reitti [GLOBAL] location search <QUERY> [--kind <KIND>] [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] journey plan --from <LOCATION_REF> --to <LOCATION_REF>
        [--depart-at <RFC3339> | --arrive-by <RFC3339>]
-       [--mode <MODE>]... [--max-walk-m <M>] [--wheelchair <POLICY>]
+       [--mode <MODE>]... [--max-walk-m <M>] [--wheelchair]
        [--include-geometry] [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] stop search [<QUERY> | --near <COORDINATES>]
        [--radius-m <M>] [--language <LANG>] [--limit <N>]
@@ -122,11 +123,11 @@ selection.
 - `LANG`: exactly `en`, `fi`, or `sv`.
 - `MODE`: exactly `bus`, `tram`, `rail`, `subway`, or `ferry`; repeated values
   are rejected. Walking is an access/transfer mode and cannot be disabled.
-- `POLICY`: `required` or `ignore`. `required` asks the provider for a
-  wheelchair-accessible itinerary. Unknown accessibility remains `unknown` in
-  results; it is never upgraded to accessible. If the current Routing v2 schema
-  cannot enforce the requirement, fail with `unsupported_preference` before
-  planning rather than silently weakening it. `ignore` is the default.
+- `--wheelchair` is a boolean request for wheelchair-aware routing (off by
+  default), mapped to `preferences.accessibility.wheelchair.enabled`. The
+  provider explicitly does not guarantee accessibility because data can be
+  incomplete or wrong. Preserve unknown evidence; enabling this flag alone
+  never establishes that a journey is accessible.
 - Journey `--limit`: integer 1–6, default 3.
 - Search `--limit`: integer 1–10, default 5.
 - Departure `--limit`: integer 1–50, default 10.
@@ -238,7 +239,7 @@ printed by default.
 | Exit | Meaning | Representative codes |
 |---:|---|---|
 | 0 | success, including empty lists and doctor warnings | — |
-| 1 | caller/domain-actionable | `usage_error`, `invalid_*`, `credential_missing`, `provider_authentication`, `location_ambiguous`, `location_not_found`, `stop_not_found`, `no_journeys`, `unsupported_preference`, `config_conflict`, `skill_exists`, any completed doctor run containing FAIL |
+| 1 | caller/domain-actionable | `usage_error`, `invalid_*`, `credential_missing`, `provider_authentication`, `location_ambiguous`, `location_not_found`, `stop_not_found`, `no_journeys`, `no_matching_journeys`, `unsupported_preference`, `config_conflict`, `skill_exists`, any completed doctor run containing FAIL |
 | 2 | system/provider/internal | `io_error`, `network_error`, `provider_rate_limited`, `provider_http`, `provider_graphql`, `provider_contract`, `internal_error`; doctor infrastructure unable to execute/report checks |
 | 130 | cancelled by SIGINT | `cancelled` |
 | 143 | cancelled by SIGTERM | `cancelled` |
@@ -310,7 +311,7 @@ implementations and golden fixtures must include every required field.
 ```
 
 Required keys are all keys shown. Nullable: `locality`, `neighbourhood`,
-`postal_code`, `confidence`. `kind` is `address|venue|stop|locality|other`;
+`postal_code`, `confidence`, and `id` for exact caller coordinates. `kind` is `address|venue|stop|locality|other`;
 `service_area` is `inside|outside|unknown`. A verified HSL stop or a provider
 locality among the nine supported municipalities is `inside`; an explicit
 provider Finnish locality outside that set is `outside`; absent/conflicting
@@ -325,7 +326,7 @@ reference.
 
 ```json
 {
-  "id": "sha256:7d…",
+  "id": "opaque-provider-alert-id",
   "header": "I and P trains will run less frequently than normal",
   "description": "…authoritative provider text…",
   "severity": "info",
@@ -339,12 +340,11 @@ reference.
 }
 ```
 
-The stable local alert id is a documented SHA-256 over canonical provider feed,
-header, validity, and sorted entities because Routing v2 did not verify a
-provider alert id. This is identity, not source authority. Nullable:
+`id` preserves Routing v2's nondeprecated `Alert.id: ID!` as an opaque provider
+identifier; do not invent a local hash. The id above is illustrative. Nullable:
 `description`, `valid_from`, `valid_until`. Unknown provider enum values map to
-`unknown` while `source_value` is added to that enum-bearing object; they are
-not guessed into a known class.
+`unknown`, with the original strings retained as nullable `source_severity` and
+`source_effect` fields on the alert, never guessed into a known class.
 
 ### Realtime evidence
 
@@ -453,7 +453,7 @@ Normative abbreviated JSON (all arrays are complete in actual output):
       "time": {"kind": "depart_at", "value": "2026-09-08T09:30:00+03:00", "time_source": "argument"},
       "modes": ["bus", "tram", "rail", "subway", "ferry"],
       "max_walk_m": null,
-      "wheelchair": "ignore",
+      "wheelchair": false,
       "include_geometry": false,
       "limit": 2
     },
@@ -530,14 +530,32 @@ Normative abbreviated JSON (all arrays are complete in actual output):
 }
 ```
 
-`wait_seconds` is derived only from gaps between consecutive normalized legs;
-otherwise null. `transfers` is `max(transit_leg_count - 1, 0)`. Duration sums
-and labels use normalized integer seconds. The Routing v2 query must request all
+Request and preserve the itinerary's authoritative `numberOfTransfers`,
+`duration`, `waitingTime`, `walkTime`, and `walkDistance` as normalized summary
+metrics. In particular, do not count transit legs minus one: the provider
+excludes stay-seated/interlined continuations from `numberOfTransfers`. Request
+`Leg.interlineWithPreviousLeg` and expose `continues_previous_vehicle` for
+navigation. For legacy fixtures lacking optional duration metrics, derive them
+only from complete consistent legs and label that derivation in metadata;
+missing evidence remains null. Comparisons use normalized seconds and metres. The Routing v2 query must request all
 schema-supported navigation facts: endpoint stop IDs and coordinates, route and
 trip IDs, headsign, platform, distance, intermediate stops, walking steps,
 accessibility evidence, alert links, and scheduled/estimated times. Null/empty
 means upstream absence or a schema-confirmed unsupported field, never that the
-client chose not to query a useful small field.
+client chose not to query a useful small field. Read intermediate transit calls
+from nondeprecated `Leg.stopCalls`; do not query deprecated `intermediateStops`
+or `intermediatePlaces`. Preserve raw walking directions and `bogusName` so a
+generated street name is not presented as an authoritative one.
+
+`--max-walk-m` is an explicit **local filter** on total walking distance among
+the bounded provider alternatives, not an upstream search parameter. The current
+`WalkPreferencesInput` has no maximum-distance field. Do not synthesize one.
+Missing total walking distance cannot prove the cap, so that candidate is
+excluded with an explanation. Return the filtering counts and `complete: false`
+when filtering discards candidates. If none remain, return
+`no_matching_journeys` (exit 1), explaining that none of the returned candidates
+met the cap; other routes may exist. Do not describe this as proof that no route
+exists. Apply comparison labels after filtering.
 
 Geometry is the bounded exception: `--include-geometry` asks Routing v2 for leg
 geometry and emits GeoJSON LineString coordinates `[longitude, latitude]`.
@@ -650,7 +668,7 @@ WARNING  Lines Metro and Metro, possibly delayed  valid 08:18–10:00
     "filters": {"routes": ["HSL:31M1"], "stops": [], "active_at": "2026-09-08T09:00:00+03:00", "time_source": "argument", "limit": 25},
     "count": 1,
     "complete": false,
-    "alerts": [{"id": "sha256:7d…", "header": "Lines Metro and Metro, Possibly delayed, 8:18 - 10:00", "description": "Metros: Metro. Possibly delayed. Reason: Technical failure. Estimated duration: 8:18 - 10:00", "severity": "warning", "effect": "other_effect", "valid_from": "2026-09-08T08:18:00+03:00", "valid_until": "2026-09-08T10:00:00+03:00", "entities": [{"kind": "route", "id": "HSL:31M1"}], "source_feed": "HSL"}],
+    "alerts": [{"id": "opaque-provider-alert-id", "header": "Lines Metro and Metro, Possibly delayed, 8:18 - 10:00", "description": "Metros: Metro. Possibly delayed. Reason: Technical failure. Estimated duration: 8:18 - 10:00", "severity": "warning", "effect": "other_effect", "valid_from": "2026-09-08T08:18:00+03:00", "valid_until": "2026-09-08T10:00:00+03:00", "entities": [{"kind": "route", "id": "HSL:31M1"}], "source_feed": "HSL"}],
     "request": {"request_id": "req_01J00000000000000000000000", "language": "en", "timezone": "Europe/Helsinki"},
     "source": {"provider": "digitransit", "dataset": "hsl", "product": "routing-v2-hsl-gtfs", "retrieved_at": "2026-09-08T06:56:40Z", "attribution": "© Digitransit; retrieved 2026-09-08T06:56:40Z", "licenses": ["CC-BY-4.0", "ODbL-1.0"], "realtime_included": true}
   },
@@ -1071,6 +1089,7 @@ Repository gates for every implementation issue are:
 cargo fmt --all --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
+python3 scripts/probe-digitransit.py check
 issuectl doctor --json
 ```
 

@@ -52,6 +52,12 @@ Do not substitute OTP development documentation for deployed-field verification.
   `timeRange`, `omitCanceled`, and `omitNonPickups`. Explicitly request cancellation
   inclusion where the product promises cancellation evidence.
 
+- `Itinerary.numberOfTransfers: Int!` explicitly excludes stay-seated/interlined
+  continuations. Use it instead of transit-leg-count minus one. The itinerary
+  also provides nondeprecated `duration`, `waitingTime`, `walkTime` (seconds)
+  and `walkDistance` (metres). `Leg.interlineWithPreviousLeg` provides the
+  navigation fact that the passenger stays in the same vehicle.
+
 ## Client policy
 
 One attempt per provider operation, bounded request count and response size,
