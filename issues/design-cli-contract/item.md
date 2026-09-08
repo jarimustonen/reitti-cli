@@ -9,6 +9,9 @@ epic: v1-0-agent-journey-planner
 lane: foundation
 lane_seq: 20
 blocked_by: ['@validate-data-contracts']
+commits:
+- hash: a3a539e
+  summary: define reitti v1 CLI contract
 ---
 
 # Design the agent-first CLI and result schema
@@ -28,7 +31,7 @@ Define a small, stable `reitti` command surface and versioned output schema befo
 
 The normative implementation contract is in [`design.md`](design.md).
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [x] Exact grammar and bounds cover strict validation, tagged location references, explicit ambiguity retries, time zones, departure-vs-arrival searches, transport/accessibility preferences, and bounded provider calls.
 - [x] Schema-v1 envelopes cover every command, warnings, errors/exits, provider attribution, realtime evidence, null/unknown data, schema discovery, and deterministic human output.
@@ -37,3 +40,13 @@ The normative implementation contract is in [`design.md`](design.md).
 - [x] Structured help and copy-pasteable examples are specified for every v1 command, together with doctor and the synchronized Claude/pi/Codex companion-skill surface.
 - [x] Core/client/CLI seams and deterministic unit, fixture-contract, golden, mock-server, skill, and end-to-end tests are implementable without redesign.
 - [x] The design preserves the verified Routing v2 HSL GTFS behavior and records applicability decisions for all sections of `AGENTS-AI-FIRST-CLI.md`.
+
+## Resolution
+
+### 2026-09-08T08:01:25Z · @issuectl
+
+Accepted design delivered in design.md; all required repository gates and offline Digitransit fixture validation passed.
+
+## Reopen Notes — 2026-09-08
+
+Reopened for primary-agent review corrections before implementation: offline diagnostics, honest coordinate scope, raw stop IDs in typed positions, navigation detail, alert relevance, arithmetic, retry semantics, schema IDs, and incidental-surface reduction.

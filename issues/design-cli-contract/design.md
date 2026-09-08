@@ -21,9 +21,10 @@ or realtime update exists when the source did not return evidence for it.
 
 v1 supports the verified HSL router and these municipalities: Helsinki, Espoo,
 Vantaa, Kauniainen, Kerava, Kirkkonummi, Sipoo, Siuntio, and Tuusula. A result
-outside that boundary may be shown by search with `service_area: "outside"`, but
-journey planning rejects it unless the provider identifies it as an HSL stop.
-This is a product boundary, not a claim that the provider has no wider data.
+outside that boundary may be shown by search with `service_area: "outside"`.
+Journey planning rejects only a location proven outside; `unknown` is passed
+unchanged to the HSL router with honest scope metadata. This is a product
+boundary, not a claim that the provider has no wider data.
 
 Runtime provider traffic is limited to:
 
@@ -44,15 +45,18 @@ One CLI invocation performs at most the following provider requests:
 |---|---:|---|
 | `location search` | 1 | one geocoding search |
 | `stop search` | 1 | one bounded Routing v2 stop query |
-| `journey plan` | 3 | at most one lookup for each `query:`/`place:` endpoint, then one plan query |
+| `journey plan` | 3 | at most one lookup for each `query:`/`place:` endpoint, then one plan query; `coord:` adds no lookup |
 | `stop departures` | 1 | one bounded Routing v2 stop query |
 | `alert list` | 1 | one Routing v2 alert query, filtered and capped locally if needed |
-| `doctor` | 2 | one minimal geocoding and one minimal Routing v2 probe |
+| `doctor` | 0 offline / 2 online | local checks by default; `--online` adds one minimal geocoding and one Routing v2 probe |
 | all other commands | 0 | local only |
 
-There are no transparent retries in v1. On HTTP 403/429, return a provider
-error and preserve `Retry-After` when present without guessing the quota or
-reason. A later client may add a retry policy without changing domain models.
+Every provider operation gets one bounded attempt in v1. There are no
+transparent retries or hidden waits. On a retryable network failure or HTTP
+403/429, the error reports `retryable` and preserves `Retry-After` when present
+without guessing the quota or reason. The client issue may implement only this
+single-attempt policy; a future explicit retry policy can be added without
+changing domain models.
 
 ## 2. Command grammar
 
@@ -63,12 +67,12 @@ reitti [GLOBAL] location search <QUERY> [--kind <KIND>] [--language <LANG>] [--l
 reitti [GLOBAL] journey plan --from <LOCATION_REF> --to <LOCATION_REF>
        [--depart-at <RFC3339> | --arrive-by <RFC3339>]
        [--mode <MODE>]... [--max-walk-m <M>] [--wheelchair <POLICY>]
-       [--language <LANG>] [--limit <N>]
+       [--include-geometry] [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] stop search [<QUERY> | --near <COORDINATES>]
        [--radius-m <M>] [--language <LANG>] [--limit <N>]
-reitti [GLOBAL] stop departures <STOP_REF> [--at <RFC3339>]
+reitti [GLOBAL] stop departures <STOP_ID> [--at <RFC3339>]
        [--window <DURATION>] [--mode <MODE>]... [--language <LANG>] [--limit <N>]
-reitti [GLOBAL] alert list [--route <ROUTE_ID>]... [--stop <STOP_REF>]...
+reitti [GLOBAL] alert list [--route <ROUTE_ID>]... [--stop <STOP_ID>]...
        [--active-at <RFC3339>] [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] config path
 reitti [GLOBAL] config show [--show-secrets]
@@ -78,7 +82,7 @@ reitti [GLOBAL] config update [--language <LANG>] [--timezone <IANA_TZ>]
        [--private-marker <TEXT>]... [--subscription-key-stdin] [--dry-run]
 reitti [GLOBAL] schema list
 reitti [GLOBAL] schema show <SCHEMA_NAME>
-reitti [GLOBAL] doctor [--fix] [--dry-run]
+reitti [GLOBAL] doctor [--online]
 reitti [GLOBAL] version
 reitti [GLOBAL] skill list
 reitti [GLOBAL] skill print <NAME> [--resource <PATH>]
@@ -93,7 +97,6 @@ transferred ownership to a positional parser:
 --json                       schema-versioned JSON instead of text
 --output <PATH>              atomically write the command's full data output to PATH
 --verbose                    diagnostic JSONL on stderr; off by default
---color <always|never>       default never; never TTY-detected
 --routing-url <HTTPS_URL>    per-invocation endpoint override
 --geocoding-url <HTTPS_URL>  per-invocation endpoint override
 --connect-timeout <DURATION> per-invocation timeout override
@@ -111,7 +114,7 @@ never partially replaced. Provider commands are small and strictly capped, so
 JSONL/pagination is not part of v1.
 
 There are no aliases (`ls`, `get`, `disruption`, `depart`, etc.), prompts,
-pagers, spinners, TTY-sensitive formatting, implicit color, or interactive
+pagers, spinners, color/ANSI output, TTY-sensitive formatting, or interactive
 selection.
 
 ### Accepted scalar grammars
@@ -137,8 +140,9 @@ selection.
   source offset where meaningful; retrieval timestamps are UTC `Z`.
 - Coordinates are `LAT,LON` in WGS84 decimal degrees, latitude first, with no
   whitespace; latitude -90…90 and longitude -180…180.
-- IDs and queries are non-empty and must contain a non-whitespace character.
-  Inputs are not silently trimmed or case-corrected.
+- `STOP_ID` and `ROUTE_ID` are canonical raw HSL GTFS IDs matching
+  `^HSL:[A-Za-z0-9_.-]+$`. IDs and queries are non-empty and must contain a
+  non-whitespace character. Inputs are not silently trimmed or case-corrected.
 
 ## 3. Stable references and explicit disambiguation
 
@@ -151,9 +155,12 @@ stop:<GTFS id>                           stop:HSL:1020453
 coord:<LAT,LON>                          coord:60.1699,24.9384
 ```
 
-A `STOP_REF` is exactly `stop:<GTFS id>`. A bare ID, bare coordinate, or bare
-place name is rejected with `invalid_location_ref`/`invalid_stop_ref`; explicit
-tagging prevents an agent from accidentally changing interpretation.
+Within polymorphic journey endpoints, a stop uses `stop:<GTFS id>` and a bare
+ID, bare coordinate, or bare place name is rejected with
+`invalid_location_ref`; explicit tagging prevents an agent from accidentally
+changing interpretation. Stop-specific positions instead accept a canonical
+raw `STOP_ID`, for example `HSL:1020453`, because the argument type is already
+unambiguous. A prefixed `stop:HSL:…` there is rejected with `invalid_stop_id`.
 
 `location search` returns `candidate.ref` values byte-for-byte suitable for
 `journey plan`. A `query:` endpoint in `journey plan` performs a bounded search:
@@ -164,10 +171,11 @@ example using `place:` or `stop:`. Provider confidence may be reported but is
 never used alone to silently select a winner. A `place:` reference is looked up
 by stable Pelias gid; a missing/stale gid is `location_not_found`.
 
-A `coord:` is accepted as the exact endpoint supplied by the caller and may be
-reverse-labelled within the existing endpoint lookup budget. The coordinate,
-not the reverse-geocoder label, remains its identity. `stop:` is resolved by
-Routing v2 and retains the HSL GTFS id.
+A `coord:` is accepted as the exact endpoint supplied by the caller and passed
+directly to Routing v2. It never triggers reverse geocoding. Because no
+municipality polygon contract has been verified, a bare coordinate has
+`service_area: "unknown"`; the CLI neither claims it is inside nor rejects it.
+`stop:` is resolved by Routing v2 and retains the HSL GTFS id.
 
 `stop search` has two mutually exclusive forms. A positional query searches
 named stops. `--near` finds stops around an exact coordinate and requires no
@@ -230,8 +238,8 @@ printed by default.
 | Exit | Meaning | Representative codes |
 |---:|---|---|
 | 0 | success, including empty lists and doctor warnings | — |
-| 1 | caller/domain-actionable | `usage_error`, `invalid_*`, `location_ambiguous`, `location_not_found`, `stop_not_found`, `no_journeys`, `unsupported_preference`, `config_conflict`, `skill_exists`, doctor check failure |
-| 2 | system/provider/internal | `io_error`, `network_error`, `provider_authentication`, `provider_rate_limited`, `provider_http`, `provider_graphql`, `provider_contract`, `internal_error` |
+| 1 | caller/domain-actionable | `usage_error`, `invalid_*`, `credential_missing`, `provider_authentication`, `location_ambiguous`, `location_not_found`, `stop_not_found`, `no_journeys`, `unsupported_preference`, `config_conflict`, `skill_exists`, any completed doctor run containing FAIL |
+| 2 | system/provider/internal | `io_error`, `network_error`, `provider_rate_limited`, `provider_http`, `provider_graphql`, `provider_contract`, `internal_error`; doctor infrastructure unable to execute/report checks |
 | 130 | cancelled by SIGINT | `cancelled` |
 | 143 | cancelled by SIGTERM | `cancelled` |
 
@@ -303,8 +311,12 @@ implementations and golden fixtures must include every required field.
 
 Required keys are all keys shown. Nullable: `locality`, `neighbourhood`,
 `postal_code`, `confidence`. `kind` is `address|venue|stop|locality|other`;
-`service_area` is `inside|outside|unknown`. `modes` is sorted in canonical mode
-order and may be empty. A resolved location adds `input_ref` and `resolution`
+`service_area` is `inside|outside|unknown`. A verified HSL stop or a provider
+locality among the nine supported municipalities is `inside`; an explicit
+provider Finnish locality outside that set is `outside`; absent/conflicting
+scope evidence is `unknown`. Bare coordinates are always `unknown` in v1.
+`modes` is sorted in canonical mode order and may be empty. A resolved location
+adds `input_ref` and `resolution`
 (`exact_coordinate|stable_place|stable_stop|unique_query`) while retaining the
 same fields. For `coord:`, `id` is null and `ref` is the normalized coordinate
 reference.
@@ -413,8 +425,8 @@ tie count. There is no `recommended` label or opaque score.
 $ reitti journey plan --from place:gtfshsl:station:GTFS:HSL:1000102 \
     --to coord:60.1776,24.6529 --depart-at 2026-09-08T09:30:00+03:00 --limit 2
 2 alternatives · Kamppi → 60.1776,24.6529 · depart 09:30 EEST
-1  10:02–10:45  42m55s  1 transfer   walk 10m56s  M1 → 531  fastest, earliest arrival
-2  10:17–10:59  41m28s  1 transfer   walk 11m34s  M1 → 530  —
+1  10:02–10:45  42m55s  1 transfer   walk 10m56s  M1 → 531  earliest arrival
+2  10:17–10:59  41m28s  1 transfer   walk 11m34s  M1 → 530  fastest
 
 Alternative 1
   walk 1m24s to Kamppi
@@ -442,11 +454,12 @@ Normative abbreviated JSON (all arrays are complete in actual output):
       "modes": ["bus", "tram", "rail", "subway", "ferry"],
       "max_walk_m": null,
       "wheelchair": "ignore",
+      "include_geometry": false,
       "limit": 2
     },
     "resolved": {
       "from": {"input_ref": "place:gtfshsl:station:GTFS:HSL:1000102", "resolution": "stable_place", "ref": "place:gtfshsl:station:GTFS:HSL:1000102", "kind": "stop", "id": "gtfshsl:station:GTFS:HSL:1000102", "label": "Kampin metroasema", "name": "Kampin metroasema", "locality": "Helsinki", "neighbourhood": "Kamppi", "postal_code": "00100", "coordinates": {"latitude": 60.168842, "longitude": 24.931199}, "source": "gtfshsl", "source_layer": "station", "confidence": 1.0, "service_area": "inside", "modes": ["subway"]},
-      "to": {"input_ref": "coord:60.1776,24.6529", "resolution": "exact_coordinate", "ref": "coord:60.1776,24.6529", "kind": "other", "id": null, "label": "60.1776,24.6529", "name": "60.1776,24.6529", "locality": null, "neighbourhood": null, "postal_code": null, "coordinates": {"latitude": 60.1776, "longitude": 24.6529}, "source": "caller", "source_layer": "coordinate", "confidence": null, "service_area": "inside", "modes": []}
+      "to": {"input_ref": "coord:60.1776,24.6529", "resolution": "exact_coordinate", "ref": "coord:60.1776,24.6529", "kind": "other", "id": null, "label": "60.1776,24.6529", "name": "60.1776,24.6529", "locality": null, "neighbourhood": null, "postal_code": null, "coordinates": {"latitude": 60.1776, "longitude": 24.6529}, "source": "caller", "source_layer": "coordinate", "confidence": null, "service_area": "unknown", "modes": []}
     },
     "count": 2,
     "complete": false,
@@ -459,13 +472,12 @@ Normative abbreviated JSON (all arrays are complete in actual output):
         "duration_seconds": 2575,
         "transfers": 1,
         "walk_seconds": 656,
-        "wait_seconds": 154,
+        "wait_seconds": 174,
         "transit_seconds": 1745,
         "walk_distance_m": null,
         "accessibility": {"wheelchair_requested": false, "status": "unknown", "evidence": []},
         "realtime": {"status": "mixed", "updated_legs": 1, "scheduled_only_legs": 1, "cancelled_legs": 0},
         "comparison": [
-          {"label": "fastest", "metric": "duration_seconds", "value": 2575, "tied": 1},
           {"label": "earliest_arrival", "metric": "end_time", "value": "2026-09-08T10:45:09+03:00", "tied": 1}
         ],
         "alerts": [],
@@ -484,6 +496,8 @@ Normative abbreviated JSON (all arrays are complete in actual output):
             "start": {"state": "scheduled", "scheduled_time": "2026-09-08T10:02:14+03:00", "estimated_time": null, "delay_seconds": null, "observed_realtime": false},
             "end": {"state": "scheduled", "scheduled_time": "2026-09-08T10:03:38+03:00", "estimated_time": null, "delay_seconds": null, "observed_realtime": false},
             "intermediate_stops": [],
+            "steps": [],
+            "navigation_complete": true,
             "geometry": null,
             "alerts": [],
             "cancelled": false
@@ -501,6 +515,8 @@ Normative abbreviated JSON (all arrays are complete in actual output):
             "start": {"state": "updated", "scheduled_time": "2026-09-08T09:52:00+03:00", "estimated_time": "2026-09-08T10:03:38+03:00", "delay_seconds": 698, "observed_realtime": true},
             "end": {"state": "updated", "scheduled_time": "2026-09-08T10:11:00+03:00", "estimated_time": "2026-09-08T10:21:43+03:00", "delay_seconds": 643, "observed_realtime": true},
             "intermediate_stops": [],
+            "steps": [],
+            "navigation_complete": true,
             "geometry": null,
             "alerts": [],
             "cancelled": false
@@ -516,10 +532,23 @@ Normative abbreviated JSON (all arrays are complete in actual output):
 
 `wait_seconds` is derived only from gaps between consecutive normalized legs;
 otherwise null. `transfers` is `max(transit_leg_count - 1, 0)`. Duration sums
-and labels use normalized integer seconds. `walk_distance_m`, geometry,
-platform, trip, headsign, intermediate stops, alerts, and accessibility evidence
-remain null/empty unless requested from and supplied by Routing v2. Geometry,
-when present, is GeoJSON LineString coordinates `[longitude, latitude]`.
+and labels use normalized integer seconds. The Routing v2 query must request all
+schema-supported navigation facts: endpoint stop IDs and coordinates, route and
+trip IDs, headsign, platform, distance, intermediate stops, walking steps,
+accessibility evidence, alert links, and scheduled/estimated times. Null/empty
+means upstream absence or a schema-confirmed unsupported field, never that the
+client chose not to query a useful small field.
+
+Geometry is the bounded exception: `--include-geometry` asks Routing v2 for leg
+geometry and emits GeoJSON LineString coordinates `[longitude, latitude]`.
+Without it `geometry` is null. Walking legs contain `steps`, always requested,
+with rows `{instruction,distance_m,street_name,relative_direction,coordinates}`;
+each nullable field reflects source absence. The adapter caps walking steps at 200 per leg. Geometry is all-or-nothing and
+capped at 10,000 decoded points across the response: if the source exceeds that
+cap, geometry is omitted and `navigation_complete: false` plus
+`navigation_truncated` are emitted rather than serving a misleading truncated
+line. A walking-step overflow retains the first 200 in source order, marks the
+same incomplete state, and warns explicitly.
 
 Zero alternatives is `no_journeys` exit 1 and includes the resolved endpoints
 and retry suggestions; it is not success with a fabricated fallback. A GraphQL
@@ -563,7 +592,7 @@ seconds-after-service-day before output. `scheduledDeparture` and
 `realtimeDeparture` are never interpreted as Unix timestamps by themselves.
 
 ```console
-$ reitti stop departures stop:HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 3
+$ reitti stop departures HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 3
 Päärautatieasema · next 3 departures from 09:55 EEST
 09:57 est  3  Kuusitie via Kallio  37s early  updated
 09:58 est  5  Katajanokan term.    44s early  updated
@@ -595,10 +624,15 @@ a missing trip is not called cancelled.
 
 ### `alert list`
 
-Route and stop filters are OR within their type and AND across types. Repeated
-identical filters are rejected. `--active-at` defaults to the injected current
-time. An alert with an unknown validity boundary is retained and marked by a
-warning; the CLI does not infer inactivity. Sort by severity
+Supplied route and stop references form one relevance union, and applicable
+feed-wide alerts are also retained. For example, with both a route and stop
+filter, an alert affecting only that route remains relevant; there is no
+cross-type AND that hides it. Repeated identical filters are rejected.
+An alert whose entity scope is absent or unknown is conservatively retained as
+possibly feed-wide with an `alert_scope_unknown` warning, never silently
+dropped. `--active-at` defaults to the injected current time. An alert with an
+unknown validity boundary is retained and marked by a warning; the CLI does not
+infer inactivity. Sort by severity
 (`severe`, `warning`, `info`, `unknown`), then start time (null last), then id.
 
 ```console
@@ -709,8 +743,9 @@ lists are `<redacted>` by default. `--show-secrets` is allowed only on
 warning in JSON stdout, and never alters verbose diagnostics. It exists for
 canon compliance but companion-skill guidance must not use it.
 
-Missing credential on provider commands is `provider_authentication` exit 2
-with a safe fix: set `DIGITRANSIT_SUBSCRIPTION_KEY` or pipe the key to
+Missing credential on provider commands is `credential_missing` exit 1, and a
+provider HTTP 401 is `provider_authentication` exit 1. Both include the safe fix:
+set `DIGITRANSIT_SUBSCRIPTION_KEY` or pipe the key to
 `reitti config update --subscription-key-stdin`. It never includes the rejected
 value. Config path/show/version/schema/skill work without credentials.
 
@@ -743,10 +778,9 @@ help
 `schema show <name>` prints the bundled JSON Schema 2020-12 document for the
 **unwrapped `data` object**, except `error` and `help`, which describe their
 complete documents. Under `--json`, data is `{name, dialect, schema}`. Unknown
-name is `schema_not_found` exit 1 with accepted names. Schemas use `$id` values
-`https://reitti.example/schema/v1/<name>.json`; the neutral reserved domain is
-intentional until the project has a public canonical URL. Implementation must
-replace it only as a breaking coordinated design update, not with a private URL.
+name is `schema_not_found` exit 1 with accepted names. Schemas use stable, location-independent `$id` values
+`urn:reitti:schema:v1:<name>`, for example
+`urn:reitti:schema:v1:journey-plan`. They are identifiers, not fetchable URLs.
 
 ### Version
 
@@ -802,15 +836,15 @@ copy-pasteable example. Required examples for the command paths are:
 location search: reitti --json location search Kamppi --kind stop --limit 5
 journey plan: reitti --json journey plan --from place:… --to stop:HSL:1020453 --arrive-by 2026-09-08T10:00:00+03:00
 stop search: reitti --json stop search --near 60.1699,24.9384 --radius-m 500 --limit 5
-stop departures: reitti --json stop departures stop:HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 10
-alert list: reitti --json alert list --route HSL:31M1 --active-at 2026-09-08T09:00:00+03:00
+stop departures: reitti --json stop departures HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 10
+alert list: reitti --json alert list --route HSL:31M1 --stop HSL:1020453 --active-at 2026-09-08T09:00:00+03:00
 config path: reitti --json config path
 config show: reitti --json config show
 config update: printf '%s\n' "$DIGITRANSIT_KEY" | reitti --json config update --subscription-key-stdin
 schema list: reitti --json schema list
 schema show: reitti --json schema show journey-plan
 version: reitti --json version
-doctor: reitti --json doctor
+doctor: reitti --json doctor --online
 skill list: reitti --json skill list
 skill print: reitti skill print reitti
 skill install: reitti --json skill install reitti --agent all --dry-run
@@ -821,36 +855,39 @@ never a literal secret.
 
 ### Doctor
 
-`doctor` is read-only and runs stable checks in this order:
+`doctor` is diagnostic-only, read-only, offline by default, and runs stable
+local checks in this order:
 
 1. `config.path` — resolvable absolute XDG/config path and secure file type/mode;
 2. `config.values` — every configured value parses and no secret appears in a
    non-secret key;
 3. `credential.subscription_key` — key resolves, reported only as present/absent;
-4. `provider.geocoding` — one minimal authenticated candidate request;
-5. `provider.routing_v2` — one minimal authenticated GraphQL request and envelope check;
-6. `skill.sync` — installed skills found under supported runtime layouts match;
-7. `public_artifacts.private_markers` — exact case-insensitive scan of bundled
+4. `skill.sync` — installed skills found under supported runtime layouts match;
+5. `public_artifacts.private_markers` — exact case-insensitive scan of bundled
    text against configured `private_markers`, exempting this project's eventual
    derived public coordinates;
-8. `build.provenance` — commit/provenance shape is valid.
+6. `build.provenance` — commit/provenance shape is valid.
 
-No key means credential and online checks fail with a safe suggestion. Missing
-`private_markers` is WARN naming `REITTI_PRIVATE_MARKERS`; it does not invent
-private identities. HTTP 403/429 remains an online FAIL without a quota claim.
-Exit 0 for OK/WARN only, 1 for any FAIL caused by local configuration, and 2 if
-a system/provider failure prevents a check from completing. Each JSON check is
+Only `--online` adds, in this order, `provider.geocoding` (one minimal
+authenticated request) and `provider.routing_v2` (one minimal authenticated
+GraphQL request and envelope check). Troubleshooting never spends quota or
+requires network unless the caller opts in.
+
+No key is a local FAIL with a safe suggestion; offline doctor still completes
+all other checks. Missing `private_markers` is WARN naming
+`REITTI_PRIVATE_MARKERS`; it does not invent private identities. HTTP 401,
+403, or 429 is an online FAIL without a quota claim. Any completed doctor run
+with one or more FAIL checks exits 1 and still emits all checks. Exit 2 is
+reserved for infrastructure failure that prevents doctor from executing or
+serializing its check report. Each JSON check is
 `{id,status,message,fix_suggestion,details}` where status is `ok|warn|fail`;
 nullable `fix_suggestion` is always present. Summary is `{ok,warn,fail}`.
 
 Text is one fixed `OK|WARN|FAIL  <id>  <message>` line per check followed by
-`summary: N ok, M warn, K fail`. `doctor --fix` first emits the §11 planning
-envelope when combined with `--dry-run`; otherwise it applies only safe,
-explicit fixes: tighten an owned config file's mode to 0600 and replace an older
-installed bundled skill. It never creates a credential, rewrites config values,
-replaces a newer skill, or changes provider state. Checks are rerun afterward
-and each action is reported. With no applicable safe fix it is a read-only
-no-op.
+`summary: N ok, M warn, K fail`. There is no `--fix`: configuration mutation
+belongs to explicit `config update`, and skill replacement belongs to explicit
+`skill install --force`. This diagnostic-only design avoids an incidental
+mutation path.
 
 ### Support-command JSON payloads
 
@@ -882,9 +919,9 @@ All still use the common `{schema_version,data,warnings}` envelope.
   "schema_list": {"schemas": [{"name": "journey-plan", "schema_version": 1}]},
   "schema_show": {"name": "journey-plan", "dialect": "https://json-schema.org/draft/2020-12/schema", "schema": {}},
   "doctor": {
+    "online": false,
     "checks": [{"id": "config.path", "status": "ok", "message": "Config path is secure and readable.", "fix_suggestion": null, "details": {}}],
-    "summary": {"ok": 1, "warn": 0, "fail": 0},
-    "fixes": []
+    "summary": {"ok": 1, "warn": 0, "fail": 0}
   },
   "skill_list": {
     "skills": [{"name": "reitti", "description": "Plan and explain HSL-area journeys with reitti.", "cli_version": "1.0.0", "schema_version": 1}],
@@ -898,9 +935,8 @@ All still use the common `{schema_version,data,warnings}` envelope.
 
 The object above is a compact shape catalogue, not one command's response.
 `config_update` adds `dry_run: true` and `would` instead of `updated` on a dry
-run. `doctor --fix` fills `fixes` with `{check_id,action,status}` rows. Skill
-install dry-run uses the shared top-level planning envelope and performs no
-writes. `schema_show.schema` is the complete bundled schema rather than the
+run. Skill install dry-run uses the shared top-level planning envelope and
+performs no writes. `schema_show.schema` is the complete bundled schema rather than the
 empty illustrative object above.
 
 ### Companion skill
@@ -1005,7 +1041,7 @@ frozen clock to assert provider freshness. Stable serialization requires:
 - provider-order preservation where specified;
 - UTC-independent fixture locale and `Europe/Helsinki` timezone data;
 - integer normalized durations and canonical coordinate formatting;
-- final newline in all output and no ANSI unless `--color=always`.
+- final newline in all output and no ANSI/color output.
 
 Required test layers:
 
@@ -1021,7 +1057,8 @@ Required test layers:
    symlink rejection, atomic writes, redaction, stdin handling, and no secret in
    captured argv/stdout/stderr;
 6. mock-server integration tests asserting exact maximum request counts,
-   operation names, variables, headers, timeout behavior, no retries, and no
+   operation names, variables, headers, timeout behavior, one attempt with no
+   transparent retries, and no
    direct GTFS-RT/Routing Data/Map calls;
 7. structured-help/schema snapshots and JSON Schema validation of every golden;
 8. skill byte-identity/layout/drift/no-clobber tests for Claude, pi, and Codex;
@@ -1050,7 +1087,7 @@ goldens automatically.
 | §9–§10 | flag-selected deterministic format, schema 1 envelopes, real build provenance, warnings in stdout JSON |
 | §11 | `config update` and `skill install` have dry-run and idempotent retry-safe behavior; provider commands are read-only |
 | §12–§13 | no long-running or unbounded-inline v1 command; strict caps make streaming/pagination/export unnecessary |
-| §14–§18 | structured drill-down help, native three-agent skill, version sync, read-only doctor plus a tightly bounded safe `--fix` twin |
+| §14–§18 | structured drill-down help, native three-agent skill, version sync, diagnostic-only offline doctor with explicit online probes; repair stays on owning commands |
 | §19 | injectable clock and hidden frozen-time; injected ids/timestamps complete deterministic tests |
 | §20–§21 | no owned record tree to format or bootstrap; selective XDG config update replaces init |
 | §22 | existing `reitti-core` / `reitti-cli` split retained |
