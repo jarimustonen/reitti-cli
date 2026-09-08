@@ -1,0 +1,267 @@
+{
+  "case": "successful itinerary planning with scheduled and estimated times",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "planConnection": {
+          "edges": [
+            {
+              "node": {
+                "end": "2026-09-08T10:45:09+03:00",
+                "legs": [
+                  {
+                    "duration": 84.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:03:38+03:00"
+                    },
+                    "from": {
+                      "name": "Origin"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:02:14+03:00"
+                    },
+                    "to": {
+                      "name": "Kamppi"
+                    }
+                  },
+                  {
+                    "duration": 1085.0,
+                    "end": {
+                      "estimated": {
+                        "delay": "PT10M43S",
+                        "time": "2026-09-08T10:21:43+03:00"
+                      },
+                      "scheduledTime": "2026-09-08T10:11:00+03:00"
+                    },
+                    "from": {
+                      "name": "Kamppi"
+                    },
+                    "mode": "SUBWAY",
+                    "realtimeState": "UPDATED",
+                    "route": {
+                      "gtfsId": "HSL:31M1",
+                      "shortName": "M1"
+                    },
+                    "start": {
+                      "estimated": {
+                        "delay": "PT11M38S",
+                        "time": "2026-09-08T10:03:38+03:00"
+                      },
+                      "scheduledTime": "2026-09-08T09:52:00+03:00"
+                    },
+                    "to": {
+                      "name": "Matinkylä"
+                    }
+                  },
+                  {
+                    "duration": 323.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:27:06+03:00"
+                    },
+                    "from": {
+                      "name": "Matinkylä"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:21:43+03:00"
+                    },
+                    "to": {
+                      "name": "Matinkylä (M)"
+                    }
+                  },
+                  {
+                    "duration": 660.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:41:00+03:00"
+                    },
+                    "from": {
+                      "name": "Matinkylä (M)"
+                    },
+                    "mode": "BUS",
+                    "realtimeState": "SCHEDULED",
+                    "route": {
+                      "gtfsId": "HSL:2531",
+                      "shortName": "531"
+                    },
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:30:00+03:00"
+                    },
+                    "to": {
+                      "name": "Puolarmäki"
+                    }
+                  },
+                  {
+                    "duration": 249.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:45:09+03:00"
+                    },
+                    "from": {
+                      "name": "Puolarmäki"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:41:00+03:00"
+                    },
+                    "to": {
+                      "name": "Destination"
+                    }
+                  }
+                ],
+                "start": "2026-09-08T10:02:14+03:00"
+              }
+            },
+            {
+              "node": {
+                "end": "2026-09-08T10:59:13+03:00",
+                "legs": [
+                  {
+                    "duration": 84.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:19:09+03:00"
+                    },
+                    "from": {
+                      "name": "Origin"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:17:45+03:00"
+                    },
+                    "to": {
+                      "name": "Kamppi"
+                    }
+                  },
+                  {
+                    "duration": 1075.0,
+                    "end": {
+                      "estimated": {
+                        "delay": "PT11M4S",
+                        "time": "2026-09-08T10:37:04+03:00"
+                      },
+                      "scheduledTime": "2026-09-08T10:26:00+03:00"
+                    },
+                    "from": {
+                      "name": "Kamppi"
+                    },
+                    "mode": "SUBWAY",
+                    "realtimeState": "UPDATED",
+                    "route": {
+                      "gtfsId": "HSL:31M1",
+                      "shortName": "M1"
+                    },
+                    "start": {
+                      "estimated": {
+                        "delay": "PT12M9S",
+                        "time": "2026-09-08T10:19:09+03:00"
+                      },
+                      "scheduledTime": "2026-09-08T10:07:00+03:00"
+                    },
+                    "to": {
+                      "name": "Matinkylä"
+                    }
+                  },
+                  {
+                    "duration": 237.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:41:01+03:00"
+                    },
+                    "from": {
+                      "name": "Matinkylä"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:37:04+03:00"
+                    },
+                    "to": {
+                      "name": "Matinkylä (M)"
+                    }
+                  },
+                  {
+                    "duration": 600.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:53:00+03:00"
+                    },
+                    "from": {
+                      "name": "Matinkylä (M)"
+                    },
+                    "mode": "BUS",
+                    "realtimeState": "SCHEDULED",
+                    "route": {
+                      "gtfsId": "HSL:5530",
+                      "shortName": "530"
+                    },
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:43:00+03:00"
+                    },
+                    "to": {
+                      "name": "Puolarmetsänkatu"
+                    }
+                  },
+                  {
+                    "duration": 373.0,
+                    "end": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:59:13+03:00"
+                    },
+                    "from": {
+                      "name": "Puolarmetsänkatu"
+                    },
+                    "mode": "WALK",
+                    "realtimeState": null,
+                    "route": null,
+                    "start": {
+                      "estimated": null,
+                      "scheduledTime": "2026-09-08T10:53:00+03:00"
+                    },
+                    "to": {
+                      "name": "Destination"
+                    }
+                  }
+                ],
+                "start": "2026-09-08T10:17:45+03:00"
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "MnxORVhUX1BBR0V8MjAyNi0wOS0wOFQwNzoyMDozNlp8fDFofFNUUkVFVF9BTkRfQVJSSVZBTF9USU1FfGZhbHNlfDIwMjYtMDktMDhUMDc6MTc6NDVafDIwMjYtMDktMDhUMDc6NTk6MTNafDF8MzQ3Mnx8"
+          }
+        }
+      }
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

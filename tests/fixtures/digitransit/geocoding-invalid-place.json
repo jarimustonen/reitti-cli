@@ -1,0 +1,38 @@
+{
+  "case": "invalid Pelias place identifier",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/place"
+  },
+  "response": {
+    "body": {
+      "features": [],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "errors": [
+          "id `fictional:invalid is invalid: must be of the format source:layer:id for ex: 'geonames:venue:4163334'"
+        ],
+        "query": {
+          "lang": "fi",
+          "private": false
+        },
+        "timestamp": 1788850605953,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 400
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

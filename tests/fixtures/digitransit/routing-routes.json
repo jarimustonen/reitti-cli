@@ -1,0 +1,40 @@
+{
+  "case": "successful route lookup",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "routes": [
+          {
+            "gtfsId": "HSL:1005",
+            "longName": "Jätkäsaari - Ruoholahti - Päärautatieas. - Katajanokan term.",
+            "mode": "TRAM",
+            "shortName": "5"
+          },
+          {
+            "gtfsId": "HSL:1005H",
+            "longName": "Jätkäsaari - Ruoholahti (M) - Päärautatieasema",
+            "mode": "TRAM",
+            "shortName": "5H"
+          },
+          {
+            "gtfsId": "HSL:1005T",
+            "longName": "Länsisatama - Ruoholahti - Päärautatieas - Katajanokan term.",
+            "mode": "TRAM",
+            "shortName": "5T"
+          }
+        ]
+      }
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

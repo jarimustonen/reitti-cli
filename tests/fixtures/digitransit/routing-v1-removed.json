@@ -1,0 +1,15 @@
+{
+  "case": "removed Routing v1 journey-planning endpoint",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql"
+  },
+  "response": {
+    "body": "This endpoint has been removed. v2 Routing endpoint has replaced this endpoint. More information at https://digitransit.fi/en/developers/apis/1-routing-api/.",
+    "headers": {},
+    "status": 404
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

@@ -1,0 +1,135 @@
+{
+  "case": "successful Pelias autocomplete",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/autocomplete"
+  },
+  "response": {
+    "body": {
+      "bbox": [
+        22.740395,
+        60.166533,
+        26.470233,
+        63.313047
+      ],
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [
+              24.930608,
+              60.166533
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "point",
+            "confidence": 1,
+            "gid": "nlsfi:venue:mml-10342635",
+            "id": "mml-10342635",
+            "label": "Kamppi, Helsinki",
+            "layer": "venue",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Kamppi",
+            "neighbourhood": "Kamppi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898845",
+            "postalcode": "00180",
+            "postalcode_gid": "whosonfirst:postalcode:421473001",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "nlsfi",
+            "source_id": "mml-10342635"
+          },
+          "type": "Feature"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              26.470233,
+              61.673626
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "point",
+            "confidence": 1,
+            "gid": "nlsfi:venue:mml-10157858",
+            "id": "mml-10157858",
+            "label": "Kamppi, Joutsa",
+            "layer": "venue",
+            "localadmin": "Joutsa",
+            "localadmin_gid": "whosonfirst:localadmin:907198751",
+            "name": "Kamppi",
+            "postalcode": "19650",
+            "postalcode_gid": "whosonfirst:postalcode:421474215",
+            "region": "Keski-Suomi",
+            "region_gid": "whosonfirst:region:85683117",
+            "source": "nlsfi",
+            "source_id": "mml-10157858"
+          },
+          "type": "Feature"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              22.740395,
+              61.282531
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "point",
+            "confidence": 1,
+            "gid": "nlsfi:venue:mml-10842861",
+            "id": "mml-10842861",
+            "label": "Kamppi, Sastamala",
+            "layer": "venue",
+            "localadmin": "Sastamala",
+            "localadmin_gid": "whosonfirst:localadmin:907199751",
+            "name": "Kamppi",
+            "postalcode": "32730",
+            "postalcode_gid": "whosonfirst:postalcode:421474987",
+            "region": "Pirkanmaa",
+            "region_gid": "whosonfirst:region:85683099",
+            "source": "nlsfi",
+            "source_id": "mml-10842861"
+          },
+          "type": "Feature"
+        }
+      ],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "query": {
+          "boundary.country": [
+            "FIN"
+          ],
+          "lang": "fi",
+          "private": false,
+          "size": 10,
+          "text": "kamppi",
+          "tokens": [
+            "kamppi"
+          ]
+        },
+        "timestamp": 1788850604430,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

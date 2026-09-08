@@ -1,0 +1,85 @@
+{
+  "case": "successful Pelias reverse geocoding",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/reverse"
+  },
+  "response": {
+    "body": {
+      "bbox": [
+        24.938634,
+        60.170123,
+        24.938634,
+        60.170123
+      ],
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [
+              24.938634,
+              60.170123
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "point",
+            "confidence": 0.8,
+            "distance": 0.028,
+            "gid": "openstreetmap:address:node:1110731829",
+            "housenumber": "9 E",
+            "id": "node:1110731829",
+            "label": "Mannerheimintie 9 E, Helsinki",
+            "layer": "address",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Mannerheimintie 9 E",
+            "neighbourhood": "Kluuvi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898847",
+            "postalcode": "00100",
+            "postalcode_gid": "whosonfirst:postalcode:421479569",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "openstreetmap",
+            "source_id": "node:1110731829",
+            "street": "Mannerheimintie"
+          },
+          "type": "Feature"
+        }
+      ],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "query": {
+          "boundary.circle.lat": 60.1699,
+          "boundary.circle.lon": 24.9384,
+          "boundary.country": [
+            "FIN"
+          ],
+          "lang": "fi",
+          "point.lat": 60.1699,
+          "point.lon": 24.9384,
+          "private": false,
+          "querySize": 10,
+          "size": 1
+        },
+        "timestamp": 1788850605133,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

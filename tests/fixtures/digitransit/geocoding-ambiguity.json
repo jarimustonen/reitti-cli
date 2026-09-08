@@ -1,0 +1,165 @@
+{
+  "case": "ambiguous place search with multiple candidates",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/search"
+  },
+  "response": {
+    "body": {
+      "bbox": [
+        24.931199,
+        60.168842,
+        24.933375,
+        60.169586
+      ],
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [
+              24.931199,
+              60.168842
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "centroid",
+            "addendum": {
+              "GTFS": {
+                "modes": [
+                  "SUBWAY"
+                ]
+              }
+            },
+            "confidence": 1,
+            "gid": "gtfshsl:station:GTFS:HSL:1000102",
+            "id": "GTFS:HSL:1000102",
+            "label": "Kampin metroasema (Kamppi), Kamppi, Helsinki",
+            "layer": "station",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Kampin metroasema",
+            "neighbourhood": "Kamppi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898845",
+            "postalcode": "00100",
+            "postalcode_gid": "whosonfirst:postalcode:421479569",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "gtfshsl",
+            "source_id": "GTFS:HSL:1000102"
+          },
+          "type": "Feature"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              24.931662,
+              60.169048
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "centroid",
+            "confidence": 1,
+            "gid": "openstreetmap:station:node:1378007268",
+            "housenumber": "1",
+            "id": "node:1378007268",
+            "label": "Kamppi, Kampinkuja 1, Helsinki",
+            "layer": "station",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Kamppi",
+            "neighbourhood": "Kamppi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898845",
+            "postalcode": "00100",
+            "postalcode_gid": "whosonfirst:postalcode:421479569",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "openstreetmap",
+            "source_id": "node:1378007268",
+            "street": "Kampinkuja"
+          },
+          "type": "Feature"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              24.933375,
+              60.169586
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "centroid",
+            "addendum": {
+              "GTFS": {
+                "modes": [
+                  "BUS"
+                ]
+              }
+            },
+            "confidence": 1,
+            "gid": "gtfshsl:station:GTFS:HSL:1000015",
+            "id": "GTFS:HSL:1000015",
+            "label": "Kamppi (kaukoliikenneterminaali), Kamppi, Helsinki",
+            "layer": "station",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Kamppi (kaukoliikenneterminaali)",
+            "neighbourhood": "Kamppi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898845",
+            "postalcode": "00100",
+            "postalcode_gid": "whosonfirst:postalcode:421479569",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "gtfshsl",
+            "source_id": "GTFS:HSL:1000015"
+          },
+          "type": "Feature"
+        }
+      ],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "query": {
+          "boundary.country": [
+            "FIN"
+          ],
+          "boundary.rect.max_lat": 60.35,
+          "boundary.rect.max_lon": 25.2,
+          "boundary.rect.min_lat": 60.1,
+          "boundary.rect.min_lon": 24.7,
+          "lang": "fi",
+          "parsed_text": {
+            "name": "kamppi",
+            "neighbourhood": "kamppi"
+          },
+          "private": false,
+          "querySize": 50,
+          "size": 5,
+          "text": "kamppi"
+        },
+        "timestamp": 1788850115293,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

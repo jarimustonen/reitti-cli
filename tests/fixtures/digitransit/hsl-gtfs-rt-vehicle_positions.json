@@ -1,0 +1,30 @@
+{
+  "case": "HSL GTFS-RT vehicle_positions metadata and protobuf signature",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl"
+  },
+  "response": {
+    "body": {
+      "cache_control": "max-age=1",
+      "content_range": "bytes 0-31/110877",
+      "content_type": "application/x-protobuf",
+      "documented_max_age_seconds": 1,
+      "feed": "vehicle_positions",
+      "last_modified": "Tue, 08 Sep 2026 06:56:47 GMT",
+      "sampled_bytes": 32,
+      "status": 206,
+      "url": "https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl"
+    },
+    "headers": {
+      "cache-control": "max-age=1",
+      "content-range": "bytes 0-31/110877",
+      "content-type": "application/x-protobuf",
+      "last-modified": "Tue, 08 Sep 2026 06:56:47 GMT"
+    },
+    "status": 206
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

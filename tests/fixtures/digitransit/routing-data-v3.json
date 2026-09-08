@@ -1,0 +1,33 @@
+{
+  "case": "Routing Data v3 artifact index",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/routing-data/v3/hsl/"
+  },
+  "response": {
+    "body": {
+      "artifact_names": [
+        "HSL-gtfs.zip",
+        "HSLlautta-gtfs.zip",
+        "Uber-gtfs.zip",
+        "build-config.json",
+        "graph-hsl-b601e42972ca3a7335c7c0dc70356e40baafe3a6.zip",
+        "graph.obj",
+        "hsl.pbf",
+        "hsl.tif",
+        "otp-config.json",
+        "router-config.json",
+        "router-hsl.zip",
+        "street-build.log",
+        "streetGraph.obj"
+      ]
+    },
+    "headers": {
+      "content-type": "text/html"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

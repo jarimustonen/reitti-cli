@@ -1,0 +1,68 @@
+{
+  "case": "current HSL service alerts",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "alerts": [
+          {
+            "alertDescriptionText": "I and P trains will run less frequently than normal between Helsinki and Myyrmäki from 10 August and 4 October. Trains use only track 1 at Malminkartano. Every other I train between Helsinki, Tikkurila, Airport and Myyrmäki will be turning back towards the airport at Myyrmäki. More information hsl.fi/en/ringrail",
+            "alertEffect": "DETOUR",
+            "alertHeaderText": "I and P trains will run less frequently than normal between Helsinki and Myyrmäki from 10 August",
+            "alertSeverityLevel": "INFO",
+            "effectiveEndDate": 1791162000,
+            "effectiveStartDate": 1785920400,
+            "entities": [
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:3002P"
+              },
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:3001I"
+              }
+            ],
+            "feed": "HSL"
+          },
+          {
+            "alertDescriptionText": "Metros:  Metro. Possibly delayed. Reason: Technical failure. Estimated duration: 8:18 - 10:00",
+            "alertEffect": "OTHER_EFFECT",
+            "alertHeaderText": "Lines Metro and Metro, Possibly delayed, 8:18 - 10:00",
+            "alertSeverityLevel": "WARNING",
+            "effectiveEndDate": 1788850800,
+            "effectiveStartDate": 1788844680,
+            "entities": [
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:31M1"
+              },
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:31M2"
+              },
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:31M1B"
+              },
+              {
+                "__typename": "Route",
+                "gtfsId": "HSL:31M2B"
+              }
+            ],
+            "feed": "HSL"
+          }
+        ]
+      }
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

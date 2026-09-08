@@ -1,0 +1,86 @@
+{
+  "case": "successful stable Pelias place lookup",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/place"
+  },
+  "response": {
+    "body": {
+      "bbox": [
+        24.931199,
+        60.168842,
+        24.931199,
+        60.168842
+      ],
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [
+              24.931199,
+              60.168842
+            ],
+            "type": "Point"
+          },
+          "properties": {
+            "accuracy": "centroid",
+            "addendum": {
+              "GTFS": {
+                "modes": [
+                  "SUBWAY"
+                ]
+              }
+            },
+            "gid": "gtfshsl:station:GTFS:HSL:1000102",
+            "id": "GTFS:HSL:1000102",
+            "label": "Kampin metroasema, Kamppi, Helsinki",
+            "layer": "station",
+            "localadmin": "Helsinki",
+            "localadmin_gid": "whosonfirst:localadmin:907199715",
+            "locality": "Helsinki",
+            "locality_gid": "whosonfirst:locality:101748417",
+            "name": "Kampin metroasema",
+            "neighbourhood": "Kamppi",
+            "neighbourhood_gid": "whosonfirst:neighbourhood:85898845",
+            "postalcode": "00100",
+            "postalcode_gid": "whosonfirst:postalcode:421479569",
+            "region": "Uusimaa",
+            "region_gid": "whosonfirst:region:85683067",
+            "source": "gtfshsl",
+            "source_id": "GTFS:HSL:1000102"
+          },
+          "type": "Feature"
+        }
+      ],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "query": {
+          "ids": [
+            {
+              "id": "GTFS:HSL:1000102",
+              "layer": "station",
+              "source": "gtfshsl"
+            }
+          ],
+          "lang": "fi",
+          "private": false
+        },
+        "timestamp": 1788850604896,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

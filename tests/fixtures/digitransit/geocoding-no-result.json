@@ -1,0 +1,45 @@
+{
+  "case": "valid geocoding search with no candidates",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://api.digitransit.fi/geocoding/v1/search"
+  },
+  "response": {
+    "body": {
+      "features": [],
+      "geocoding": {
+        "attribution": "http://pelias-api:8080/attribution",
+        "engine": {
+          "author": "Mapzen",
+          "name": "Pelias",
+          "version": "1.0"
+        },
+        "query": {
+          "boundary.country": [
+            "FIN"
+          ],
+          "lang": "fi",
+          "parsed_text": {
+            "name": "zzzz-no-such-place-987654321",
+            "street": "zzzz no such place"
+          },
+          "private": false,
+          "querySize": 30,
+          "size": 3,
+          "text": "zzzz no such place 987654321"
+        },
+        "timestamp": 1788850605651,
+        "version": "0.2"
+      },
+      "type": "FeatureCollection"
+    },
+    "headers": {
+      "cache-control": "public",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

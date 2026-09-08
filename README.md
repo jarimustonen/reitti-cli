@@ -14,6 +14,8 @@ Version 1.0 targets the HSL Journey Planner service area. The design should leav
 
 Planning and research live under the [v1.0 epic](issues/v1-0-agent-journey-planner/).
 
+To use the live service, follow the [Digitransit API access and key-rotation guide](docs/digitransit-api-access.md).
+
 ## License
 
 The software is planned to be released under the MIT License. Transit and map data retain their source licenses and attribution requirements.

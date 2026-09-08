@@ -3,7 +3,7 @@ created: 2026-09-08
 updated: 2026-09-08
 type: task
 reporter: jarimustonen
-status: open
+status: in-progress
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: foundation

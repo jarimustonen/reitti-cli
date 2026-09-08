@@ -1,0 +1,68 @@
+{
+  "case": "successful stop departures with realtime state",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "stop": {
+          "gtfsId": "HSL:1020453",
+          "name": "Päärautatieasema",
+          "stoptimesWithoutPatterns": [
+            {
+              "headsign": "Kuusitie via Kallio",
+              "realtime": true,
+              "realtimeDeparture": 35843,
+              "realtimeState": "UPDATED",
+              "scheduledDeparture": 35880,
+              "serviceDay": 1788814800,
+              "trip": {
+                "gtfsId": "HSL:1003_20260907_Ti_1_0943",
+                "route": {
+                  "shortName": "3"
+                }
+              }
+            },
+            {
+              "headsign": "Katajanokan term.",
+              "realtime": true,
+              "realtimeDeparture": 35896,
+              "realtimeState": "UPDATED",
+              "scheduledDeparture": 35940,
+              "serviceDay": 1788814800,
+              "trip": {
+                "gtfsId": "HSL:1005_20260907_Ti_1_0943",
+                "route": {
+                  "shortName": "5"
+                }
+              }
+            },
+            {
+              "headsign": "Ilmala via Kallio",
+              "realtime": true,
+              "realtimeDeparture": 36097,
+              "realtimeState": "UPDATED",
+              "scheduledDeparture": 36120,
+              "serviceDay": 1788814800,
+              "trip": {
+                "gtfsId": "HSL:1009_20260907_Ti_1_0947",
+                "route": {
+                  "shortName": "9"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

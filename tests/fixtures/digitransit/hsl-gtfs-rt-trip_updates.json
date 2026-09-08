@@ -1,0 +1,30 @@
+{
+  "case": "HSL GTFS-RT trip_updates metadata and protobuf signature",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "GET",
+    "url": "https://realtime.hsl.fi/realtime/trip-updates/v2/hsl"
+  },
+  "response": {
+    "body": {
+      "cache_control": "max-age=5",
+      "content_range": "bytes 0-31/996727",
+      "content_type": "application/x-protobuf",
+      "documented_max_age_seconds": 5,
+      "feed": "trip_updates",
+      "last_modified": "Tue, 08 Sep 2026 06:56:41 GMT",
+      "sampled_bytes": 32,
+      "status": 206,
+      "url": "https://realtime.hsl.fi/realtime/trip-updates/v2/hsl"
+    },
+    "headers": {
+      "cache-control": "max-age=5",
+      "content-range": "bytes 0-31/996727",
+      "content-type": "application/x-protobuf",
+      "last-modified": "Tue, 08 Sep 2026 06:56:41 GMT"
+    },
+    "status": 206
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}

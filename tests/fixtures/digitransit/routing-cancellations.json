@@ -1,0 +1,83 @@
+{
+  "case": "current realtime trip cancellations (may truthfully be empty)",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "canceledTrips": {
+          "edges": [
+            {
+              "node": {
+                "serviceDate": "2026-09-08",
+                "trip": {
+                  "gtfsId": "HSL:2231N_20260907_Ti_2_0422",
+                  "route": {
+                    "shortName": "231N"
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "serviceDate": "2026-09-08",
+                "trip": {
+                  "gtfsId": "HSL:2202_20260907_Ti_2_0540",
+                  "route": {
+                    "shortName": "202"
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "serviceDate": "2026-09-08",
+                "trip": {
+                  "gtfsId": "HSL:2202_20260907_Ti_1_0543",
+                  "route": {
+                    "shortName": "202"
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "serviceDate": "2026-09-08",
+                "trip": {
+                  "gtfsId": "HSL:4633_20260907_Ti_1_0605",
+                  "route": {
+                    "shortName": "633"
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "serviceDate": "2026-09-08",
+                "trip": {
+                  "gtfsId": "HSL:2202_20260907_Ti_2_0610",
+                  "route": {
+                    "shortName": "202"
+                  }
+                }
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "c2ltcGxlLWN1cnNvcjQ=",
+            "hasNextPage": true
+          }
+        }
+      }
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-08T06:56:40Z"
+}
