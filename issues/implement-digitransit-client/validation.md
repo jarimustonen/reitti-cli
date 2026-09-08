@@ -68,3 +68,35 @@ can decide whether to retry. This intentionally refines the earlier issue's
 Missing/invalid credentials are caller-actionable; transient network/provider
 failures are system failures. Never retain the raw provider error body in normal
 or verbose output when it could echo request headers or secrets.
+
+## Rich navigation request
+
+A follow-up production request at **2026-09-08T08:13:39Z** used named operation
+`NavigationPlan`, typed variables, explicit `earliestDeparture`, five transit
+mode objects, `wheelchair.enabled: true`, and optional geometry. It requested
+itinerary summary metrics, endpoint stops/platforms/coordinates, route/trip IDs,
+headsign, interlining, scheduled/estimated times, `stopCalls`, walking steps,
+encoded geometry, and full alert IDs/text/entities.
+
+The provider returned HTTP success, no GraphQL errors, no `routingErrors`, and
+three alternatives in 38,377 response bytes. Their durations were 3,065, 3,103,
+and 3,304 seconds; source transfer counts were 1, 1, and 2. Each alternative
+included walking steps (22, 18, 21), intermediate stop calls (22, 19, 17), and
+geometry (390, 408, 392 points). Actual platform codes were present on some
+endpoints and null on others. This validates the query shape and fields, not
+an accessibility guarantee or a permanent timetable.
+
+A separate schema-union lookup established:
+
+- `CallStopLocation` includes `Stop`, `Location`, and `LocationGroup`.
+- `CallScheduledTime` includes `ArrivalDepartureTime` and `TimeWindow`.
+- `AlertEntity` includes `Agency`, `Pattern`, `Route`, `RouteType`, `Stop`,
+  `StopOnRoute`, `StopOnTrip`, `Trip`, and `Unknown`.
+- `StopOnRoute` contains `route` and `stop`; `StopOnTrip` contains `trip` and
+  `stop`; a pattern exposes `route`. Preserve these relationships when filtering
+  alerts rather than discarding every non-Route/non-Stop entity.
+
+The ephemeral captures contain only public journey data, schema and query
+variables for public example locations. They may be transformed into the
+existing credential-free fixture format by the client implementation; they
+must not be presented as permanently current live transit data.
