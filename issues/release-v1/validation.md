@@ -36,3 +36,9 @@ A local redacted Gitleaks scan of the 39 commits preceding the client landing fo
 ## Runner toolchain path follow-up
 
 A later preflight found an existing rustup installation and stable ARM64 toolchain on the macOS machine, with Cargo 1.98.1 available. The dedicated repository runner initially used only the Homebrew/system PATH. Its PATH was updated to include the existing rustup-managed tools first, and only this repository's idle runner service was restarted successfully. No toolchain was installed by this change. This removes a tool-discovery problem before the generated release workflow runs; actual artifact builds remain pending.
+
+## Shared invocation correlation follow-up
+
+Primary source inspection found that `run_with_transport` allocates an ID for the verbose `invocation_started` log and handlers independently allocate another ID for `data.request.request_id`. With a nonconstant generator, these cannot be correlated. Final serialized integration must allocate one invocation ID for both, with an incrementing-generator regression test. This is a small common-dispatch correction; parallel handler workers should not edit the shared file.
+
+The subsequent [CI run 34221042725](https://github.com/jarimustonen/reitti-cli/actions/runs/34221042725), on the landed provider client, was again blocked before steps by the same account billing/spending restriction. Local macOS and Linux/MSRV checks passed independently as recorded above.
