@@ -142,6 +142,10 @@ fn collection(features: Vec<Value>) -> Value {
     json!({"features": features})
 }
 
+fn empty_plan() -> Value {
+    json!({"data":{"planConnection":{"routingErrors":[],"pageInfo":{"hasNextPage":false,"endCursor":null},"searchDateTime":"2026-09-08T11:13:39+03:00","edges":[]}}})
+}
+
 fn parse(bytes: &[u8]) -> Value {
     serde_json::from_slice(bytes).unwrap()
 }
@@ -453,6 +457,7 @@ fn query_resolution_handles_no_match_broad_locality_and_two_trusted_endpoints() 
             60.2,
             24.8,
         )]),
+        empty_plan(),
     ]);
     let (exit, _, stderr) = run(
         &trusted,
@@ -468,8 +473,9 @@ fn query_resolution_handles_no_match_broad_locality_and_two_trusted_endpoints() 
             "query:Mål",
         ],
     );
-    assert_eq!(exit, 2);
+    assert_eq!(exit, 1);
     let error = parse(&stderr);
+    assert_eq!(error["error"]["code"], "no_journeys");
     assert_eq!(
         error["error"]["details"]["from"]["resolution"],
         "unique_query"
@@ -479,14 +485,19 @@ fn query_resolution_handles_no_match_broad_locality_and_two_trusted_endpoints() 
         "unique_query"
     );
     assert_eq!(error["error"]["details"]["from"]["service_area"], "unknown");
+    assert_eq!(trusted.requests().len(), 3);
     assert_eq!(
         error["error"]["details"]["sources"]
             .as_array()
             .unwrap()
             .len(),
-        2
+        3
     );
-    assert_eq!(trusted.requests().len(), 2);
+    let requests = trusted.requests();
+    assert!(requests[0].url.contains("geocoding"));
+    assert!(requests[1].url.contains("geocoding"));
+    let plan_body: Value = serde_json::from_slice(&requests[2].body).unwrap();
+    assert_eq!(plan_body["operationName"], "NavigationPlan");
 }
 
 #[test]
@@ -533,7 +544,7 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
         60.17,
         24.94,
     );
-    let transport = MockTransport::new(vec![collection(vec![selected])]);
+    let transport = MockTransport::new(vec![collection(vec![selected]), empty_plan()]);
     let (exit, stdout, stderr) = run(
         &transport,
         &[
@@ -548,11 +559,10 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
             "coord:60.2,24.8",
         ],
     );
-    assert_eq!(exit, 2);
+    assert_eq!(exit, 1);
     assert!(stdout.is_empty());
     let error = parse(&stderr);
-    assert_eq!(error["error"]["code"], "feature_incomplete");
-    assert_eq!(error["error"]["details"]["stage"], "locations_resolved");
+    assert_eq!(error["error"]["code"], "no_journeys");
     assert_eq!(
         error["error"]["details"]["from"]["resolution"],
         "stable_place"
@@ -566,8 +576,14 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
         "exact_coordinate"
     );
     assert_eq!(error["error"]["details"]["to"]["service_area"], "unknown");
-    assert_eq!(error["error"]["details"]["plan_requests_sent"], 0);
-    assert_eq!(transport.requests().len(), 1);
+    assert_eq!(transport.requests().len(), 2);
+    assert_eq!(
+        error["error"]["details"]["sources"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
 
     let stale = MockTransport::new(vec![collection(Vec::new())]);
     let (exit, _, stderr) = run(
@@ -658,7 +674,7 @@ fn selected_place_bypasses_ambiguity_but_stale_and_proven_outside_refs_fail() {
 
 #[test]
 fn coordinates_make_zero_requests_and_stop_refs_make_exactly_one() {
-    let none = MockTransport::new(Vec::new());
+    let none = MockTransport::new(vec![empty_plan()]);
     let (exit, _, stderr) = run(
         &none,
         &[
@@ -671,15 +687,25 @@ fn coordinates_make_zero_requests_and_stop_refs_make_exactly_one() {
             "coord:60.1776,24.6529",
         ],
     );
-    assert_eq!(exit, 2);
-    assert_eq!(parse(&stderr)["error"]["details"]["plan_requests_sent"], 0);
-    assert!(none.requests().is_empty());
+    assert_eq!(exit, 1);
+    assert_eq!(parse(&stderr)["error"]["code"], "no_journeys");
+    assert_eq!(none.requests().len(), 1);
+    assert_eq!(
+        parse(&stderr)["error"]["details"]["sources"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
 
-    let stop = MockTransport::new(vec![json!({"data":{"stop":{
-        "gtfsId":"HSL:1020453", "name":"Päärautatieasema", "code":"H0301",
-        "platformCode":null, "lat":60.170347, "lon":24.941008,
-        "vehicleMode":"RAIL", "wheelchairBoarding":"POSSIBLE"
-    }}})]);
+    let stop = MockTransport::new(vec![
+        json!({"data":{"stop":{
+            "gtfsId":"HSL:1020453", "name":"Päärautatieasema", "code":"H0301",
+            "platformCode":null, "lat":60.170347, "lon":24.941008,
+            "vehicleMode":"RAIL", "wheelchairBoarding":"POSSIBLE"
+        }}}),
+        empty_plan(),
+    ]);
     let (exit, _, stderr) = run(
         &stop,
         &[
@@ -694,16 +720,27 @@ fn coordinates_make_zero_requests_and_stop_refs_make_exactly_one() {
             "coord:60,24",
         ],
     );
-    assert_eq!(exit, 2, "{}", String::from_utf8_lossy(&stderr));
+    assert_eq!(exit, 1, "{}", String::from_utf8_lossy(&stderr));
     let error = parse(&stderr);
+    assert_eq!(error["error"]["code"], "no_journeys");
     assert_eq!(
         error["error"]["details"]["from"]["resolution"],
         "stable_stop"
     );
     assert_eq!(error["error"]["details"]["from"]["ref"], "stop:HSL:1020453");
-    assert_eq!(stop.requests().len(), 1);
-    let body: Value = serde_json::from_slice(&stop.requests()[0].body).unwrap();
+    assert_eq!(stop.requests().len(), 2);
+    assert_eq!(
+        error["error"]["details"]["sources"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+    let requests = stop.requests();
+    let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
     assert_eq!(body["operationName"], "StopDetail");
+    let body: Value = serde_json::from_slice(&requests[1].body).unwrap();
+    assert_eq!(body["operationName"], "NavigationPlan");
 
     let stale = MockTransport::new(vec![json!({"data":{"stop":null}})]);
     let (exit, _, stderr) = run(
