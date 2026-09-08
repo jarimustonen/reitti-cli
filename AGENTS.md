@@ -10,6 +10,28 @@ This project follows the AI-first CLI conventions in [`AGENTS-AI-FIRST-CLI.md`](
 
 - `history/` — agent scratchpad and ephemeral planning docs (not tracked)
 
+## Validation and release work
+
+Run these gates before merging implementation changes:
+
+```sh
+cargo fmt --all --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace
+python3 scripts/probe-digitransit.py check
+issuectl doctor --json
+```
+
+Add relevant deterministic integration tests for CLI contracts and provider failures.
+Live smoke tests are deliberate, bounded checks with credentials supplied through
+the environment; never print credentials or store them in arguments or fixtures.
+
+This is a library and CLI project with no service deployment step. The current
+authorized work includes CLI design, implementation, onboarding, documentation,
+and OSS release preparation. Keep the GitHub repository private; changing its
+visibility is reserved for the maintainer. Release readiness must be supported by
+working installation and smoke tests, not only the presence of release documents.
+
 ## Documentation Pattern
 
 Every directory follows this structure:
