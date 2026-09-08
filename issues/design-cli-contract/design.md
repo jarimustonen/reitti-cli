@@ -85,8 +85,8 @@ reitti [GLOBAL] alert list [--route <ROUTE_ID>]... [--stop <STOP_ID>]...
 reitti [GLOBAL] config path
 reitti [GLOBAL] config show [--show-secrets]
 reitti [GLOBAL] config update [--language <LANG>] [--timezone <IANA_TZ>]
-       [--routing-url <HTTPS_URL>] [--geocoding-url <HTTPS_URL>]
-       [--connect-timeout <DURATION>] [--request-timeout <DURATION>]
+       [--set-routing-url <HTTPS_URL>] [--set-geocoding-url <HTTPS_URL>]
+       [--set-connect-timeout <DURATION>] [--set-request-timeout <DURATION>]
        [--private-marker <TEXT>]... [--subscription-key-stdin] [--dry-run]
 reitti [GLOBAL] schema list
 reitti [GLOBAL] schema show <SCHEMA_NAME>
@@ -744,6 +744,12 @@ never contain the value. `config update --dry-run --subscription-key-stdin`
 validates stdin and reports only `"value":"<redacted>"`.
 
 `config update` is selective and idempotent. At least one update must be named.
+Persistent endpoint and timeout setters use `--set-routing-url`,
+`--set-geocoding-url`, `--set-connect-timeout`, and `--set-request-timeout`.
+The similarly named global flags without `set-` remain per-invocation overrides
+and never become persistent writes, regardless of their argv position. A global
+override alone does not satisfy the requirement to name an update. This prevents
+clap global-argument propagation from silently persisting runtime choices.
 Lists replace in full. Endpoint overrides must be HTTPS; HTTP is rejected. The
 built-in endpoint defaults are public Digitransit coordinates, not a user's
 private environment.
