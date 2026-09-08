@@ -42,3 +42,9 @@ A later preflight found an existing rustup installation and stable ARM64 toolcha
 Primary source inspection found that `run_with_transport` allocates an ID for the verbose `invocation_started` log and handlers independently allocate another ID for `data.request.request_id`. With a nonconstant generator, these cannot be correlated. Final serialized integration must allocate one invocation ID for both, with an incrementing-generator regression test. This is a small common-dispatch correction; parallel handler workers should not edit the shared file.
 
 The subsequent [CI run 34221042725](https://github.com/jarimustonen/reitti-cli/actions/runs/34221042725), on the landed provider client, was again blocked before steps by the same account billing/spending restriction. Local macOS and Linux/MSRV checks passed independently as recorded above.
+
+## Native build on the required macOS machine
+
+The primary agent exported tracked source at `36165ca7a8e1734a1cdb0abe8ca20d7a34ddb01a` into an isolated directory on the maintainer-selected macOS runner machine and ran `cargo build --release --locked --workspace` with the existing rustup toolchain. The optimized build succeeded. `file` identified a Mach-O ARM64 executable, and `reitti version --json` executed successfully, reporting version 0.0.0, schema version 1 and the explicitly supplied source commit. Its SHA-256 was `f16adbfb3bd41f5b18f8f2f3353be3a66bbe2ef3f7285dee582af22d73805ccd`.
+
+This was a direct build on the runner machine, not a GitHub Actions job or the final release artifact. Source transfer excluded ignored files and Git metadata; no credentials were copied. Final v1 artifacts must be rebuilt after the remaining features and version bump, and the generated workflow still needs its own execution evidence.
