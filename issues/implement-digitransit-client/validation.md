@@ -100,3 +100,38 @@ The ephemeral captures contain only public journey data, schema and query
 variables for public example locations. They may be transformed into the
 existing credential-free fixture format by the client implementation; they
 must not be presented as permanently current live transit data.
+
+## Client implementation refinements
+
+The typed adapter follows deployed nullability rather than the abbreviated
+examples in the first design draft. `Alert.alertHeaderText` is nullable (the
+handler can display the description when available), and a null alert entity
+list is retained as explicit unknown scope for conservative relevance handling.
+Nullable leg steps produce an empty step list with `navigation_complete: false`;
+nullable interlining remains unknown. Nullable itinerary duration, waiting,
+walking time/distance, and leg duration remain null rather than becoming zero.
+Ordinary planning can therefore retain an itinerary whose walking distance is
+unknown, while the later `--max-walk-m` handler must exclude it because it cannot
+prove the cap. Required IDs, stop/route names needed to identify a result,
+scheduled times, and source transfer count remain strict contract boundaries.
+
+Departure normalization treats nullable `realtime` and `realtimeDeparture` as
+unknown/scheduled-only evidence instead of rejecting the board. Service-day
+seconds are combined using the Europe/Helsinki service date independently of
+output timezone. Journey delay seconds are derived from the provider's explicit
+estimated and scheduled timestamps, which preserves negative (early) values
+without depending on a separately formatted duration string.
+
+A separate bounded production verification used `dateTime.latestArrival` with
+`first: 2` for the public Kamppi-to-Espoo example. The deployed endpoint accepted
+the request and returned two alternatives arriving before the requested instant,
+with no GraphQL or routing errors. This confirms that arrive-by planning should
+continue to use `first`; switching to `last` is not warranted.
+
+The transformed credential-free fixture `routing-navigation-rich.json` records
+the named query, typed variables, attribution timestamp, and one selected rich
+alternative from the production navigation capture. It validates stop calls,
+platform/route/trip/headsign/coordinate facts, walking steps, realtime evidence,
+alerts and bounded polyline decoding; it is historical contract evidence, not a
+current timetable claim. `routing-alert-scopes.json` is explicitly an offline
+edge-contract fixture covering route, stop, feed-wide and unknown scopes.

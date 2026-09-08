@@ -1,0 +1,855 @@
+{
+  "case": "rich navigation plan with stop calls, geometry, realtime and alerts",
+  "fixture_schema_version": 1,
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1",
+    "operationName": "NavigationPlan",
+    "query": "query NavigationPlan($origin: PlanLabeledLocationInput!, $destination: PlanLabeledLocationInput!, $dateTime: PlanDateTimeInput!, $modes: PlanModesInput!, $preferences: PlanPreferencesInput!, $geometry: Boolean!) {\n planConnection(origin:$origin destination:$destination dateTime:$dateTime modes:$modes preferences:$preferences first:3) {\n  routingErrors { code description inputField }\n  pageInfo { hasNextPage endCursor }\n  searchDateTime\n  edges { node {\n   start end duration numberOfTransfers waitingTime walkTime walkDistance\n   legs {\n    mode duration distance realTime realtimeState interlineWithPreviousLeg headsign\n    trip { gtfsId } route { gtfsId shortName longName mode }\n    from { name lat lon stop { gtfsId name platformCode wheelchairBoarding } }\n    to { name lat lon stop { gtfsId name platformCode wheelchairBoarding } }\n    start { scheduledTime estimated { time delay } } end { scheduledTime estimated { time delay } }\n    stopCalls { stopLocation { __typename ... on Stop { gtfsId name lat lon platformCode } } }\n    steps { distance streetName relativeDirection absoluteDirection lat lon bogusName area stayOn exit }\n    legGeometry @include(if:$geometry) { length points }\n    alerts { id feed alertHeaderText alertDescriptionText alertSeverityLevel alertEffect effectiveStartDate effectiveEndDate entities { __typename ... on Route { gtfsId } ... on Stop { gtfsId } } }\n   }\n  } }\n }\n}",
+    "variables": {
+      "origin": {
+        "location": {
+          "coordinate": {
+            "latitude": 60.168992,
+            "longitude": 24.932366
+          }
+        }
+      },
+      "destination": {
+        "location": {
+          "coordinate": {
+            "latitude": 60.175294,
+            "longitude": 24.684855
+          }
+        }
+      },
+      "dateTime": {
+        "earliestDeparture": "2026-09-08T08:13:37.860506+00:00"
+      },
+      "modes": {
+        "transit": {
+          "transit": [
+            {
+              "mode": "BUS"
+            },
+            {
+              "mode": "TRAM"
+            },
+            {
+              "mode": "RAIL"
+            },
+            {
+              "mode": "SUBWAY"
+            },
+            {
+              "mode": "FERRY"
+            }
+          ]
+        }
+      },
+      "preferences": {
+        "accessibility": {
+          "wheelchair": {
+            "enabled": true
+          }
+        }
+      },
+      "geometry": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "data": {
+        "planConnection": {
+          "routingErrors": [],
+          "pageInfo": {
+            "hasNextPage": true,
+            "endCursor": "MnxORVhUX1BBR0V8MjAyNi0wOS0wOFQwODo0MzozNlp8fDFofFNUUkVFVF9BTkRfQVJSSVZBTF9USU1FfGZhbHNlfDIwMjYtMDktMDhUMDg6MzI6MjhafDIwMjYtMDktMDhUMDk6Mjc6MzJafDJ8NDc3OHx8"
+          },
+          "searchDateTime": "2026-09-08T11:13:37+03:00",
+          "edges": [
+            {
+              "node": {
+                "start": "2026-09-08T11:26:27+03:00",
+                "end": "2026-09-08T12:17:32+03:00",
+                "duration": 3065,
+                "numberOfTransfers": 1,
+                "waitingTime": 315,
+                "walkTime": 1005,
+                "walkDistance": 840.21,
+                "legs": [
+                  {
+                    "mode": "WALK",
+                    "duration": 84.0,
+                    "distance": 102.32,
+                    "realTime": false,
+                    "realtimeState": null,
+                    "interlineWithPreviousLeg": false,
+                    "headsign": null,
+                    "trip": null,
+                    "route": null,
+                    "from": {
+                      "name": "Origin",
+                      "lat": 60.168992,
+                      "lon": 24.932366,
+                      "stop": null
+                    },
+                    "to": {
+                      "name": "Kamppi",
+                      "lat": 60.168853,
+                      "lon": 24.931183,
+                      "stop": {
+                        "gtfsId": "HSL:1040602",
+                        "name": "Kamppi",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "start": {
+                      "scheduledTime": "2026-09-08T11:26:27+03:00",
+                      "estimated": null
+                    },
+                    "end": {
+                      "scheduledTime": "2026-09-08T11:27:51+03:00",
+                      "estimated": null
+                    },
+                    "stopCalls": [],
+                    "steps": [
+                      {
+                        "distance": 27.54,
+                        "streetName": "Kamppi",
+                        "relativeDirection": "DEPART",
+                        "absoluteDirection": "NORTHEAST",
+                        "lat": 60.1689926,
+                        "lon": 24.9323652,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 30.61,
+                        "streetName": "underpass",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "NORTHWEST",
+                        "lat": 60.1691322,
+                        "lon": 24.9327765,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 44.17,
+                        "streetName": "Kamppi",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "SOUTHWEST",
+                        "lat": 60.1693592,
+                        "lon": 24.9324635,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      }
+                    ],
+                    "legGeometry": {
+                      "length": 5,
+                      "points": "ewfnJgrdwC[qA_@l@KNj@bC"
+                    },
+                    "alerts": []
+                  },
+                  {
+                    "mode": "SUBWAY",
+                    "duration": 1085.0,
+                    "distance": 14331.0,
+                    "realTime": true,
+                    "realtimeState": "UPDATED",
+                    "interlineWithPreviousLeg": false,
+                    "headsign": "Kivenlahti via Tapiola",
+                    "trip": {
+                      "gtfsId": "HSL:31M1_20260907_Ti_2_1059"
+                    },
+                    "route": {
+                      "gtfsId": "HSL:31M1",
+                      "shortName": "M1",
+                      "longName": "Kivenlahti - Vuosaari",
+                      "mode": "SUBWAY"
+                    },
+                    "from": {
+                      "name": "Kamppi",
+                      "lat": 60.168853,
+                      "lon": 24.931183,
+                      "stop": {
+                        "gtfsId": "HSL:1040602",
+                        "name": "Kamppi",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "to": {
+                      "name": "Matinkylä",
+                      "lat": 60.159807,
+                      "lon": 24.739456,
+                      "stop": {
+                        "gtfsId": "HSL:2314602",
+                        "name": "Matinkylä",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "start": {
+                      "scheduledTime": "2026-09-08T11:22:00+03:00",
+                      "estimated": {
+                        "time": "2026-09-08T11:27:51+03:00",
+                        "delay": "PT5M51S"
+                      }
+                    },
+                    "end": {
+                      "scheduledTime": "2026-09-08T11:41:00+03:00",
+                      "estimated": {
+                        "time": "2026-09-08T11:45:56+03:00",
+                        "delay": "PT4M56S"
+                      }
+                    },
+                    "stopCalls": [
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:1040602",
+                          "name": "Kamppi",
+                          "lat": 60.168853,
+                          "lon": 24.931183,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:1201602",
+                          "name": "Ruoholahti",
+                          "lat": 60.163217,
+                          "lon": 24.915563,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:1310602",
+                          "name": "Lauttasaari",
+                          "lat": 60.159443,
+                          "lon": 24.8785,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:1310604",
+                          "name": "Koivusaari",
+                          "lat": 60.163618,
+                          "lon": 24.853666,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2222602",
+                          "name": "Keilaniemi",
+                          "lat": 60.175433,
+                          "lon": 24.829235,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2222604",
+                          "name": "Aalto-yliopisto",
+                          "lat": 60.184435,
+                          "lon": 24.823495,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2211602",
+                          "name": "Tapiola",
+                          "lat": 60.174931,
+                          "lon": 24.80351,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2214602",
+                          "name": "Urheilupuisto",
+                          "lat": 60.174534,
+                          "lon": 24.780566,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2214604",
+                          "name": "Niittykumpu",
+                          "lat": 60.170443,
+                          "lon": 24.763373,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2314602",
+                          "name": "Matinkylä",
+                          "lat": 60.159807,
+                          "lon": 24.739456,
+                          "platformCode": null
+                        }
+                      }
+                    ],
+                    "steps": [],
+                    "legGeometry": {
+                      "length": 225,
+                      "points": "svfnJ_jdwCh@|Bj@zBVx@zBbGx@vBbCbFxB|DnDfEPXPXP^^n@h@hAb@jAj@`Bv@fDXdBVbBZhDRbDTnLBhCDlCF`GXtZA~EI`DMxCY`Gs@|MUrFEpE@jDFrDLbDLrBVnCb@lDr@lExCxNt@lEr@jFp@~Fv@vHjBvPrBlRfA~JXlCZ`DZtC`@vD\\`EPzCJhCDjC?rCArCKfEOlDWbD]nC[|Bi@zCq@|CcAhDo@lBwCnH}@dCm@tBs@lCo@rCg@lCc@tCm@dFmChWUbC@BACuCxYQ~A_Dd\\E^gHzr@sAdMm@vDo@zC}@dDu@rBy@pBq@lAkAfBgArAsAjAuA~@eAd@aATcARsAH{@AgAKmAWmAa@mAq@sAaAgEmD_Aw@qAiAqAcAmDsCiDoCkB}AeAw@gAo@cAa@oA[y@G_A@}@H{@Rw@Tw@b@u@h@u@r@o@v@m@z@}@fB{@pBi@~Ae@~A_@fBc@fCYjCUnCMpCK`DIrDEdDEhDEjEApEHrDRlDXhCZnB\\jBd@hBf@`Bj@bBn@nAt@rA|@jAl@n@|@r@bAt@rFvC|F|CjAl@vAz@l@\\l@`@t@n@p@n@x@dA~@xA|@fBl@`Bl@jBl@fCp@`Df@pDt@pJRjC@L@XPdCh@tHTxEFnDDdD@rDAdFCnZCrNErQ?bDAhFEtOAhE@@AA?|B?|J?lGBlDLhDPdDTdCX|Bd@`Dh@hCj@bCz@vChB`GfMta@l@nBdBzFnF`QlBdFrBjE`CrDxSrZ~@tAv@tA~@jBv@hBp@rBl@vBh@vB`@zBb@nC|AtLvBvPj@pELfA"
+                    },
+                    "alerts": [
+                      {
+                        "id": "QWxlcnQ6SFNMOjMwNjQwOQ",
+                        "feed": "HSL",
+                        "alertHeaderText": "Liukuportaita poissa käytöstä Keilaniemen metroasemalla",
+                        "alertDescriptionText": "Keilaniemen metroaseman eteläisen pään A-sisäänkäynnin, Keilarannan liukuportaita poissa käytöstä 24.8.–5.10. Kulku hissillä tai muiden sisäänkäyntien kautta. Syy: paloilmoitinten huoltotyö",
+                        "alertSeverityLevel": "INFO",
+                        "alertEffect": "DETOUR",
+                        "effectiveStartDate": 1787595300,
+                        "effectiveEndDate": 1791147540,
+                        "entities": [
+                          {
+                            "__typename": "Stop",
+                            "gtfsId": "HSL:2222602"
+                          },
+                          {
+                            "__typename": "Stop",
+                            "gtfsId": "HSL:2222601"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "WALK",
+                    "duration": 529.0,
+                    "distance": 289.21,
+                    "realTime": false,
+                    "realtimeState": null,
+                    "interlineWithPreviousLeg": false,
+                    "headsign": null,
+                    "trip": null,
+                    "route": null,
+                    "from": {
+                      "name": "Matinkylä",
+                      "lat": 60.159807,
+                      "lon": 24.739456,
+                      "stop": {
+                        "gtfsId": "HSL:2314602",
+                        "name": "Matinkylä",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "to": {
+                      "name": "Matinkylä (M)",
+                      "lat": 60.161049,
+                      "lon": 24.740512,
+                      "stop": {
+                        "gtfsId": "HSL:2314208",
+                        "name": "Matinkylä (M)",
+                        "platformCode": "22",
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "start": {
+                      "scheduledTime": "2026-09-08T11:45:56+03:00",
+                      "estimated": null
+                    },
+                    "end": {
+                      "scheduledTime": "2026-09-08T11:54:45+03:00",
+                      "estimated": null
+                    },
+                    "stopCalls": [],
+                    "steps": [
+                      {
+                        "distance": 43.15,
+                        "streetName": "Matinkylä",
+                        "relativeDirection": "DEPART",
+                        "absoluteDirection": "NORTHEAST",
+                        "lat": 60.1596484,
+                        "lon": 24.7387528,
+                        "bogusName": false,
+                        "area": true,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 46.62,
+                        "streetName": "path",
+                        "relativeDirection": "CONTINUE",
+                        "absoluteDirection": "NORTHEAST",
+                        "lat": 60.1598092,
+                        "lon": 24.7394625,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 0.0,
+                        "streetName": "ElevatorBoardEdge",
+                        "relativeDirection": "RIGHT",
+                        "absoluteDirection": "SOUTH",
+                        "lat": 60.1599745,
+                        "lon": 24.7402369,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 0.0,
+                        "streetName": "elevator",
+                        "relativeDirection": "ELEVATOR",
+                        "absoluteDirection": null,
+                        "lat": 60.1599745,
+                        "lon": 24.7402369,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 45.06,
+                        "streetName": "path",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "NORTHEAST",
+                        "lat": 60.1599745,
+                        "lon": 24.7402369,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 56.45,
+                        "streetName": "corridor",
+                        "relativeDirection": "HARD_LEFT",
+                        "absoluteDirection": "NORTHWEST",
+                        "lat": 60.1602328,
+                        "lon": 24.7401427,
+                        "bogusName": true,
+                        "area": true,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 0.0,
+                        "streetName": "ElevatorBoardEdge",
+                        "relativeDirection": "HARD_RIGHT",
+                        "absoluteDirection": "SOUTH",
+                        "lat": 60.1605651,
+                        "lon": 24.7399499,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 0.0,
+                        "streetName": "elevator",
+                        "relativeDirection": "ELEVATOR",
+                        "absoluteDirection": null,
+                        "lat": 60.1605651,
+                        "lon": 24.7399499,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 7.92,
+                        "streetName": "corridor",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "EAST",
+                        "lat": 60.1605651,
+                        "lon": 24.7399499,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 31.82,
+                        "streetName": "station entrance",
+                        "relativeDirection": "CONTINUE",
+                        "absoluteDirection": null,
+                        "lat": 60.160593,
+                        "lon": 24.7400583,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 30.5,
+                        "streetName": "path",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "EAST",
+                        "lat": 60.1605815,
+                        "lon": 24.7403699,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 27.7,
+                        "streetName": "bike path",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "NORTHWEST",
+                        "lat": 60.1606846,
+                        "lon": 24.7408806,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      }
+                    ],
+                    "legGeometry": {
+                      "length": 26,
+                      "points": "w|dnJex~uC_@mCa@yC????AEy@n@FW{@hAFAM_@?????MA@CIMWGOHGLMEa@E_@Ge@ONQNKH"
+                    },
+                    "alerts": []
+                  },
+                  {
+                    "mode": "BUS",
+                    "duration": 660.0,
+                    "distance": 4160.0,
+                    "realTime": false,
+                    "realtimeState": "SCHEDULED",
+                    "interlineWithPreviousLeg": false,
+                    "headsign": "Espoon keskus",
+                    "trip": {
+                      "gtfsId": "HSL:2531_20260907_Ti_1_1152"
+                    },
+                    "route": {
+                      "gtfsId": "HSL:2531",
+                      "shortName": "531",
+                      "longName": "Tiistilä-Matinkylä (M)-Olari-Espoon keskus",
+                      "mode": "BUS"
+                    },
+                    "from": {
+                      "name": "Matinkylä (M)",
+                      "lat": 60.161049,
+                      "lon": 24.740512,
+                      "stop": {
+                        "gtfsId": "HSL:2314208",
+                        "name": "Matinkylä (M)",
+                        "platformCode": "22",
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "to": {
+                      "name": "Puolarmetsänkatu",
+                      "lat": 60.173138,
+                      "lon": 24.689876,
+                      "stop": {
+                        "gtfsId": "HSL:2432262",
+                        "name": "Puolarmetsänkatu",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "start": {
+                      "scheduledTime": "2026-09-08T12:00:00+03:00",
+                      "estimated": null
+                    },
+                    "end": {
+                      "scheduledTime": "2026-09-08T12:11:00+03:00",
+                      "estimated": null
+                    },
+                    "stopCalls": [
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2314208",
+                          "name": "Matinkylä (M)",
+                          "lat": 60.161049,
+                          "lon": 24.740512,
+                          "platformCode": "22"
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2311210",
+                          "name": "Piispanaukio",
+                          "lat": 60.162815,
+                          "lon": 24.73856,
+                          "platformCode": "31"
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2322212",
+                          "name": "Piispanristi",
+                          "lat": 60.164714,
+                          "lon": 24.737013,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2323207",
+                          "name": "Päiväntaite",
+                          "lat": 60.166882,
+                          "lon": 24.736519,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2323252",
+                          "name": "Meteorinsilta",
+                          "lat": 60.169261,
+                          "lon": 24.734193,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2323250",
+                          "name": "Auringonkatu",
+                          "lat": 60.172599,
+                          "lon": 24.730763,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2323240",
+                          "name": "Kuunsilta",
+                          "lat": 60.17256,
+                          "lon": 24.72448,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2321215",
+                          "name": "Kuunkatu",
+                          "lat": 60.17308,
+                          "lon": 24.72252,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2321217",
+                          "name": "Kalliolähde",
+                          "lat": 60.176736,
+                          "lon": 24.716377,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2321262",
+                          "name": "Holmankorpi",
+                          "lat": 60.17488,
+                          "lon": 24.70841,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2321220",
+                          "name": "Puolarmetsä",
+                          "lat": 60.17429,
+                          "lon": 24.70261,
+                          "platformCode": null
+                        }
+                      },
+                      {
+                        "stopLocation": {
+                          "__typename": "Stop",
+                          "gtfsId": "HSL:2432262",
+                          "name": "Puolarmetsänkatu",
+                          "lat": 60.173138,
+                          "lon": 24.689876,
+                          "platformCode": null
+                        }
+                      }
+                    ],
+                    "steps": [],
+                    "legGeometry": {
+                      "length": 103,
+                      "points": "ieenJ{a_vCyAlAc@^sA|@k@nBORsAlAoAv@{@h@{AhAML{ArAk@`@_Cj@yFl@y@Hi@RcAn@IMG?IHCT}@~AiCjCcAfA}@|@wBvBaD`D{A~Aw@v@iBlBcAdA_AhAiApAiA~Ab@rBZ|A\\`CLx@VtGJlDDjAJ`CHpBJdCBf@Bb@BfAY?Q@c@BcAVgARaAVg@VYNYXY`@_ApB}AdG_@v@Yb@iCvCg@bAk@lBUrBG~A?j@Ab@BjAPxBb@lDj@tDjBzJJj@DPhAfFdA`IVvBLpATvCRlCP`DHnBLjK@hCIhIG|HGdE@tA@xAFdBPfA`@hBt@fBp@~A|@hALPYtCCrEBrADpAZzG"
+                    },
+                    "alerts": []
+                  },
+                  {
+                    "mode": "WALK",
+                    "duration": 392.0,
+                    "distance": 448.68,
+                    "realTime": false,
+                    "realtimeState": null,
+                    "interlineWithPreviousLeg": false,
+                    "headsign": null,
+                    "trip": null,
+                    "route": null,
+                    "from": {
+                      "name": "Puolarmetsänkatu",
+                      "lat": 60.173138,
+                      "lon": 24.689876,
+                      "stop": {
+                        "gtfsId": "HSL:2432262",
+                        "name": "Puolarmetsänkatu",
+                        "platformCode": null,
+                        "wheelchairBoarding": "POSSIBLE"
+                      }
+                    },
+                    "to": {
+                      "name": "Destination",
+                      "lat": 60.175294,
+                      "lon": 24.684855,
+                      "stop": null
+                    },
+                    "start": {
+                      "scheduledTime": "2026-09-08T12:11:00+03:00",
+                      "estimated": null
+                    },
+                    "end": {
+                      "scheduledTime": "2026-09-08T12:17:32+03:00",
+                      "estimated": null
+                    },
+                    "stopCalls": [],
+                    "steps": [
+                      {
+                        "distance": 35.68,
+                        "streetName": "platform",
+                        "relativeDirection": "DEPART",
+                        "absoluteDirection": "NORTHWEST",
+                        "lat": 60.1731583,
+                        "lon": 24.6898111,
+                        "bogusName": true,
+                        "area": true,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 6.75,
+                        "streetName": "bike path",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "WEST",
+                        "lat": 60.1731859,
+                        "lon": 24.689206,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 65.0,
+                        "streetName": "Finnoontie",
+                        "relativeDirection": "RIGHT",
+                        "absoluteDirection": "NORTH",
+                        "lat": 60.1731784,
+                        "lon": 24.6890848,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 5.72,
+                        "streetName": "Puolarkuja",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "WEST",
+                        "lat": 60.1737507,
+                        "lon": 24.6889103,
+                        "bogusName": false,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 133.76,
+                        "streetName": "bike path",
+                        "relativeDirection": "RIGHT",
+                        "absoluteDirection": "NORTH",
+                        "lat": 60.1737316,
+                        "lon": 24.6888143,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": false,
+                        "exit": null
+                      },
+                      {
+                        "distance": 60.21,
+                        "streetName": "road",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "WEST",
+                        "lat": 60.1748727,
+                        "lon": 24.6880869,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      },
+                      {
+                        "distance": 141.54,
+                        "streetName": "service road",
+                        "relativeDirection": "LEFT",
+                        "absoluteDirection": "WEST",
+                        "lat": 60.1752161,
+                        "lon": 24.6873114,
+                        "bogusName": true,
+                        "area": false,
+                        "stayOn": true,
+                        "exit": null
+                      }
+                    ],
+                    "legGeometry": {
+                      "length": 31,
+                      "points": "eqgnJifuuCEPDbA?PEP@Vw@BSP]HI@BRq@NgB~@w@l@QR@VEV]l@a@z@@VBr@@HQLITGT?T@RNt@VvALz@Jv@"
+                    },
+                    "alerts": []
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "retrieved_at": "2026-09-08T08:13:39Z"
+}

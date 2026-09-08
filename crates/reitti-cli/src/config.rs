@@ -44,6 +44,9 @@ pub enum ValueSource {
 pub struct Secret(String);
 
 impl Secret {
+    pub(crate) fn new(value: String) -> Self {
+        Self(value)
+    }
     pub fn expose(&self) -> &str {
         &self.0
     }
@@ -321,7 +324,7 @@ fn choose_secret(file: Option<String>) -> Result<Option<(Secret, ValueSource)>, 
     selected
         .map(|(value, source)| {
             validate_secret(&value)?;
-            Ok((Secret(value), source))
+            Ok((Secret::new(value), source))
         })
         .transpose()
 }

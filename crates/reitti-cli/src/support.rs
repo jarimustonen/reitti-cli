@@ -1,7 +1,10 @@
+use std::time::Duration;
+
+use reitti_core::{Clock, Geocoder, Router};
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::{config, error::AppError};
+use crate::{client::HttpTransport, config, error::AppError};
 
 pub const SCHEMA_VERSION: u8 = 1;
 pub const SCHEMA_NAMES: &[&str] = &[
@@ -147,13 +150,12 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
             &["schema_version", "data", "warnings"],
             json!({"schema_version":{"const":1},"data":object_schema(&["path","summary","usage","args","flags","subcommands","exit_codes","examples"],json!({"path":string_array_schema(),"summary":{"type":"string"},"usage":{"type":"string"},"args":{"type":"array"},"flags":{"type":"array"},"subcommands":{"type":"array"},"exit_codes":{"type":"array"},"examples":{"type":"array"}})),"warnings":{"type":"array"}}),
         ),
-        // Domain owners replace these explicitly identified scaffolds before
-        // claiming their provider-backed output contracts complete.
-        _ => {
-            let mut placeholder = object_schema(&[], json!({}));
-            placeholder["description"] = json!("Temporary domain schema placeholder; provider/domain implementation issue owns the exact body.");
-            placeholder
-        }
+        "location-list" => crate::handlers::location::schema(),
+        "journey-list" => crate::handlers::journey::schema(),
+        "stop-list" => crate::handlers::stop::stop_schema(),
+        "departure-list" => crate::handlers::stop::departure_schema(),
+        "alert-list" => crate::handlers::alert::schema(),
+        _ => unreachable!("schema name was validated above"),
     };
     let wrapped = matches!(name, "error" | "help");
     let mut document = body;
@@ -163,7 +165,10 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
         "reitti {name} {}",
         if wrapped { "document" } else { "data" }
     ));
-    document["$defs"] = json!({"file_output": file_output_schema()});
+    if !document.get("$defs").is_some_and(Value::is_object) {
+        document["$defs"] = json!({});
+    }
+    document["$defs"]["file_output"] = file_output_schema();
     Ok(document)
 }
 
@@ -229,7 +234,12 @@ pub struct DoctorData {
     pub summary: DoctorSummary,
 }
 
-pub fn doctor(online: bool, overrides: &config::GlobalOverrides) -> DoctorData {
+pub fn doctor(
+    online: bool,
+    overrides: &config::GlobalOverrides,
+    clock: &dyn Clock,
+    transport: &dyn HttpTransport,
+) -> DoctorData {
     let path_result = config::resolve_path();
     let mut checks = Vec::new();
     checks.push(match &path_result {
@@ -370,12 +380,7 @@ pub fn doctor(online: bool, overrides: &config::GlobalOverrides) -> DoctorData {
         details: json!({"kind": version.build_provenance.kind}),
     });
     if online {
-        for (id, provider) in [
-            ("provider.geocoding", "geocoding"),
-            ("provider.routing_v2", "routing-v2"),
-        ] {
-            checks.push(DoctorCheck { id, status: CheckStatus::Fail, message: format!("The {provider} online probe is not implemented in this foundation build; no request was sent."), fix_suggestion: Some("Use a build containing the Digitransit client slice.".to_owned()), details: json!({"requests_sent": 0}) });
-        }
+        append_online_checks(&mut checks, &loaded, clock, transport);
     }
     let summary = DoctorSummary {
         ok: checks
@@ -395,5 +400,180 @@ pub fn doctor(online: bool, overrides: &config::GlobalOverrides) -> DoctorData {
         online,
         checks,
         summary,
+    }
+}
+
+fn append_online_checks(
+    checks: &mut Vec<DoctorCheck>,
+    loaded: &Result<config::EffectiveConfig, AppError>,
+    clock: &dyn Clock,
+    transport: &dyn HttpTransport,
+) {
+    match loaded {
+        Ok(config) if config.subscription_key.is_some() => {
+            let key = config
+                .subscription_key
+                .as_ref()
+                .expect("checked")
+                .0
+                .expose()
+                .to_owned();
+            let connect = Duration::from_millis(
+                config::validate_duration("connect_timeout", &config.connect_timeout.0, None)
+                    .expect("loaded config was validated"),
+            );
+            let request = Duration::from_millis(
+                config::validate_duration("request_timeout", &config.request_timeout.0, None)
+                    .expect("loaded config was validated"),
+            );
+            let geocoding = crate::digitransit::DigitransitGeocoder::new(
+                &config.geocoding_url.0,
+                key.clone(),
+                transport,
+                clock,
+                connect,
+                request,
+            )
+            .map_err(|error| error.to_string())
+            .and_then(|client| {
+                crate::handlers::await_provider(client.probe())
+                    .map(|_| ())
+                    .map_err(|error| error.message)
+            });
+            checks.push(provider_check("provider.geocoding", "geocoding", geocoding));
+            let routing = crate::digitransit::DigitransitRouter::new(
+                &config.routing_url.0,
+                key,
+                transport,
+                clock,
+                connect,
+                request,
+            )
+            .map_err(|error| error.to_string())
+            .and_then(|client| {
+                crate::handlers::await_provider(client.probe())
+                    .map(|_| ())
+                    .map_err(|error| error.message)
+            });
+            checks.push(provider_check("provider.routing_v2", "routing-v2", routing));
+        }
+        _ => {
+            checks.push(skipped_provider_check("provider.geocoding", "geocoding"));
+            checks.push(skipped_provider_check("provider.routing_v2", "routing-v2"));
+        }
+    }
+}
+
+fn provider_check(
+    id: &'static str,
+    provider: &'static str,
+    result: Result<(), String>,
+) -> DoctorCheck {
+    match result {
+        Ok(()) => DoctorCheck { id, status: CheckStatus::Ok, message: format!("The Digitransit {provider} probe succeeded."), fix_suggestion: None, details: json!({"requests_sent": 1}) },
+        Err(message) => DoctorCheck { id, status: CheckStatus::Fail, message, fix_suggestion: Some("Check the credential, network, and provider status, then rerun reitti doctor --online.".to_owned()), details: json!({"requests_sent": 1}) },
+    }
+}
+
+fn skipped_provider_check(id: &'static str, provider: &'static str) -> DoctorCheck {
+    DoctorCheck { id, status: CheckStatus::Fail, message: format!("The Digitransit {provider} probe was skipped because configuration or the credential is invalid."), fix_suggestion: Some("Fix config.values and credential.subscription_key first.".to_owned()), details: json!({"requests_sent": 0}) }
+}
+
+#[cfg(test)]
+mod online_tests {
+    use super::*;
+    use crate::{
+        client::{HttpFuture, HttpRequest, HttpResponse},
+        config::{ConfigPath, PathSource, Secret, ValueSource},
+    };
+    use chrono::{DateTime, Utc};
+    use reitti_core::{Clock, FixedClock};
+    use std::{
+        collections::{BTreeMap, VecDeque},
+        sync::Mutex,
+    };
+
+    #[derive(Debug)]
+    struct Mock {
+        requests: Mutex<Vec<HttpRequest>>,
+        responses: Mutex<VecDeque<HttpResponse>>,
+    }
+    impl HttpTransport for Mock {
+        fn execute(&self, request: HttpRequest) -> HttpFuture<'_> {
+            self.requests.lock().unwrap().push(request);
+            let response = self.responses.lock().unwrap().pop_front().unwrap();
+            Box::pin(async move { Ok(response) })
+        }
+    }
+    fn response(status: u16, body: Value) -> HttpResponse {
+        HttpResponse {
+            status,
+            headers: BTreeMap::new(),
+            body: serde_json::to_vec(&body).unwrap(),
+        }
+    }
+    fn config() -> config::EffectiveConfig {
+        config::EffectiveConfig {
+            path: ConfigPath {
+                path: "/tmp/reitti-test-config".into(),
+                exists: false,
+                source: PathSource::Default,
+            },
+            subscription_key: Some((Secret::new("secret-canary".into()), ValueSource::Env)),
+            language: ("en".into(), ValueSource::Default),
+            timezone: ("Europe/Helsinki".into(), ValueSource::Default),
+            routing_url: (config::DEFAULT_ROUTING_URL.into(), ValueSource::Default),
+            geocoding_url: (config::DEFAULT_GEOCODING_URL.into(), ValueSource::Default),
+            connect_timeout: ("1s".into(), ValueSource::Default),
+            request_timeout: ("2s".into(), ValueSource::Default),
+            private_markers: (vec![], ValueSource::Default),
+        }
+    }
+    fn clock() -> impl Clock {
+        FixedClock::new(
+            DateTime::parse_from_rfc3339("2026-09-08T08:13:39Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        )
+    }
+
+    #[test]
+    fn online_doctor_runs_both_probes_even_when_the_first_fails() {
+        let mock = Mock {
+            requests: Mutex::new(vec![]),
+            responses: Mutex::new(
+                vec![
+                    response(503, json!({})),
+                    response(200, json!({"data":{"feeds":[]}})),
+                ]
+                .into(),
+            ),
+        };
+        let mut checks = vec![];
+        append_online_checks(&mut checks, &Ok(config()), &clock(), &mock);
+        assert_eq!(mock.requests.lock().unwrap().len(), 2);
+        assert!(matches!(checks[0].status, CheckStatus::Fail));
+        assert!(matches!(checks[1].status, CheckStatus::Ok));
+        assert_eq!(checks[0].details["requests_sent"], 1);
+    }
+
+    #[test]
+    fn invalid_config_skips_both_online_requests() {
+        let mock = Mock {
+            requests: Mutex::new(vec![]),
+            responses: Mutex::new(VecDeque::new()),
+        };
+        let mut checks = vec![];
+        append_online_checks(
+            &mut checks,
+            &Err(AppError::caller("invalid_config", "invalid")),
+            &clock(),
+            &mock,
+        );
+        assert!(mock.requests.lock().unwrap().is_empty());
+        assert_eq!(checks.len(), 2);
+        assert!(checks
+            .iter()
+            .all(|check| check.details["requests_sent"] == 0));
     }
 }

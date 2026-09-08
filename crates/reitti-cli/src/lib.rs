@@ -2,7 +2,9 @@ pub mod build_provenance;
 pub mod client;
 pub mod command;
 pub mod config;
+pub mod digitransit;
 pub mod error;
+pub mod handlers;
 pub mod output;
 pub mod support;
 
@@ -61,6 +63,26 @@ pub fn run_with(
     stderr: &mut dyn Write,
     system_clock: &dyn Clock,
     request_ids: &dyn RequestIdGenerator,
+) -> u8 {
+    run_with_transport(
+        args,
+        stdin,
+        stdout,
+        stderr,
+        system_clock,
+        request_ids,
+        &client::ReqwestTransport,
+    )
+}
+
+pub fn run_with_transport(
+    args: Vec<OsString>,
+    stdin: &mut dyn io::BufRead,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    system_clock: &dyn Clock,
+    request_ids: &dyn RequestIdGenerator,
+    transport: &dyn client::HttpTransport,
 ) -> u8 {
     let args = normalize_version_alias(args);
     let json_requested = semantic_flag(&args, "--json");
@@ -122,7 +144,7 @@ pub fn run_with(
             return 2;
         }
     }
-    let result = execute(cli, stdin, clock, request_ids);
+    let result = execute(cli, stdin, clock, request_ids, transport);
     finish(result, json, prepared, stdout, stderr)
 }
 
@@ -133,8 +155,9 @@ fn prepare_output(path: Option<&Path>) -> Result<Option<output::AtomicOutput>, A
 fn execute(
     cli: Cli,
     stdin: &mut dyn io::BufRead,
-    _clock: &dyn Clock,
-    _request_ids: &dyn RequestIdGenerator,
+    clock: &dyn Clock,
+    request_ids: &dyn RequestIdGenerator,
+    transport: &dyn client::HttpTransport,
 ) -> Result<CommandOutput, AppError> {
     let overrides = GlobalOverrides {
         routing_url: cli.routing_url,
@@ -146,7 +169,7 @@ fn execute(
     match cli.command {
         Command::Version => execute_version(),
         Command::Config { command } => execute_config(command, &overrides, stdin),
-        Command::Doctor(args) => execute_doctor(args.online, &overrides),
+        Command::Doctor(args) => execute_doctor(args.online, &overrides, clock, transport),
         Command::Schema { command } => execute_schema(command),
         Command::Skill { command } => execute_skill(command),
         Command::Location { command } => match command {
@@ -154,8 +177,12 @@ fn execute(
                 command::nonblank(&args.query)
                     .map_err(|message| AppError::caller("invalid_query", message))?;
                 let config = require_credential(&overrides)?;
-                let _language = config::resolve_language(args.language, &config)?;
-                Err(AppError::feature_incomplete("location list"))
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::location::execute(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
             }
         },
         Command::Journey { command } => match command {
@@ -179,8 +206,12 @@ fn execute(
                 validate_datetime(args.depart_at.as_deref().or(args.arrive_by.as_deref()))?;
                 reject_duplicates(args.mode.iter().map(|mode| format!("{mode:?}")), "mode")?;
                 let config = require_credential(&overrides)?;
-                let _language = config::resolve_language(args.language, &config)?;
-                Err(AppError::feature_incomplete("journey list"))
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::journey::execute(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
             }
         },
         Command::Stop { command } => match command {
@@ -204,8 +235,12 @@ fn execute(
                         })?;
                 }
                 let config = require_credential(&overrides)?;
-                let _language = config::resolve_language(args.language, &config)?;
-                Err(AppError::feature_incomplete("stop list"))
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::stop::execute_list(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
             }
         },
         Command::Departure { command } => match command {
@@ -226,8 +261,12 @@ fn execute(
                 )?;
                 reject_duplicates(args.mode.iter().map(|mode| format!("{mode:?}")), "mode")?;
                 let config = require_credential(&overrides)?;
-                let _language = config::resolve_language(args.language, &config)?;
-                Err(AppError::feature_incomplete("departure list"))
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::stop::execute_departures(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
             }
         },
         Command::Alert { command } => match command {
@@ -256,8 +295,12 @@ fn execute(
                 reject_duplicates(args.stop.iter().cloned(), "stop")?;
                 validate_datetime(args.active_at.as_deref())?;
                 let config = require_credential(&overrides)?;
-                let _language = config::resolve_language(args.language, &config)?;
-                Err(AppError::feature_incomplete("alert list"))
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::alert::execute(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
             }
         },
     }
@@ -339,8 +382,13 @@ fn execute_config(
     }
 }
 
-fn execute_doctor(online: bool, overrides: &GlobalOverrides) -> Result<CommandOutput, AppError> {
-    let data = support::doctor(online, overrides);
+fn execute_doctor(
+    online: bool,
+    overrides: &GlobalOverrides,
+    clock: &dyn Clock,
+    transport: &dyn client::HttpTransport,
+) -> Result<CommandOutput, AppError> {
+    let data = support::doctor(online, overrides, clock, transport);
     let text = data
         .checks
         .iter()
@@ -396,6 +444,20 @@ fn execute_skill(command: SkillCommand) -> Result<CommandOutput, AppError> {
             "no_skills_bundled",
             "No companion skills are bundled in this foundation build; nothing was installed.",
         )),
+    }
+}
+
+fn handler_context<'a>(
+    config: &'a config::EffectiveConfig,
+    clock: &'a dyn Clock,
+    request_ids: &'a dyn RequestIdGenerator,
+    transport: &'a dyn client::HttpTransport,
+) -> handlers::HandlerContext<'a> {
+    handlers::HandlerContext {
+        config,
+        clock,
+        request_ids,
+        transport,
     }
 }
 

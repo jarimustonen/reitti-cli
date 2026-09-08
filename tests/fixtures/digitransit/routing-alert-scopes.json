@@ -1,0 +1,26 @@
+{
+  "case": "synthetic schema-derived alert scope contract: route, stop, feed-wide and unknown",
+  "fixture_schema_version": 1,
+  "evidence": {
+    "origin": "synthetic schema-derived valid-provider examples; alert IDs and text were not retrieved from production",
+    "timestamp_note": "fixed to the navigation fixture retrieval instant solely for deterministic offline tests"
+  },
+  "request": {
+    "authentication": "digitransit-subscription-key header from environment",
+    "method": "POST",
+    "url": "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1",
+    "operationName": "Alerts",
+    "variables": {"feeds": ["HSL"]}
+  },
+  "response": {
+    "status": 200,
+    "headers": {"content-type": "application/json"},
+    "body": {"data": {"alerts": [
+      {"id":"alert-route","feed":"HSL","alertHeaderText":"Route notice","alertDescriptionText":"","alertSeverityLevel":"WARNING","alertEffect":"OTHER_EFFECT","effectiveStartDate":1788844680,"effectiveEndDate":1788850800,"entities":[{"__typename":"Route","gtfsId":"HSL:31M1"}]},
+      {"id":"alert-stop","feed":"HSL","alertHeaderText":"Stop notice","alertDescriptionText":"","alertSeverityLevel":"INFO","alertEffect":"STOP_MOVED","effectiveStartDate":null,"effectiveEndDate":null,"entities":[{"__typename":"Stop","gtfsId":"HSL:1020453"}]},
+      {"id":"alert-feed","feed":"HSL","alertHeaderText":"Feed notice","alertDescriptionText":"","alertSeverityLevel":"INFO","alertEffect":null,"effectiveStartDate":null,"effectiveEndDate":null,"entities":[]},
+      {"id":"alert-unknown","feed":"HSL","alertHeaderText":null,"alertDescriptionText":"Unknown scope notice","alertSeverityLevel":null,"alertEffect":null,"effectiveStartDate":null,"effectiveEndDate":null,"entities":null}
+    ]}}
+  },
+  "retrieved_at": "2026-09-08T08:13:39Z"
+}
