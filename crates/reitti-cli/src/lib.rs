@@ -6,6 +6,8 @@ pub mod digitransit;
 pub mod error;
 pub mod handlers;
 pub mod output;
+pub mod skill;
+mod skill_manifest;
 pub mod support;
 
 use std::{
@@ -431,19 +433,39 @@ fn execute_schema(command: SchemaCommand) -> Result<CommandOutput, AppError> {
 fn execute_skill(command: SkillCommand) -> Result<CommandOutput, AppError> {
     match command {
         SkillCommand::List => CommandOutput::success(
-            "No companion skills are bundled in this foundation build.",
-            json!({"skills":[],"supported_agents":["claude","pi","codex"],"install":{"selection_flag":"--agent","default":"all","accepted_values":["claude","pi","codex","all"],"target_flag":"--target","dry_run_flag":"--dry-run","force_flag":"--force","interactive":false,"no_clobber_default":true,"overwrite_requires_force":true,"layouts":[{"agent":"claude","path":".claude/skills/<name>/...","form":"agent-skills-tree"},{"agent":"pi","path":".pi/agent/skills/<name>/...","form":"agent-skills-tree"},{"agent":"codex","path":".codex/skills/<name>/...","form":"agent-skills-tree"}]}}),
+            format!(
+                "{}  {}  cli {}  schema {}",
+                skill::NAME,
+                skill::DESCRIPTION,
+                skill::CLI_VERSION,
+                skill::SKILL_SCHEMA_VERSION
+            ),
+            json!({"skills":[skill::metadata()],"supported_agents":["claude","pi","codex"],"install":{"selection_flag":"--agent","default":"all","accepted_values":["claude","pi","codex","all"],"target_flag":"--target","dry_run_flag":"--dry-run","force_flag":"--force","interactive":false,"no_clobber_default":true,"overwrite_requires_force":true,"layouts":[{"agent":"claude","path":".claude/skills/<name>/...","form":"agent-skills-tree"},{"agent":"pi","path":".pi/agent/skills/<name>/...","form":"agent-skills-tree"},{"agent":"codex","path":".codex/skills/<name>/...","form":"agent-skills-tree"}]}}),
         ),
-        SkillCommand::Print { name, .. } => Err(AppError::invalid(
-            "skill_not_found",
-            format!("Skill '{name}' is not bundled in this build."),
-            name,
-            json!([]),
-        )),
-        SkillCommand::Install(_) => Err(AppError::caller(
-            "no_skills_bundled",
-            "No companion skills are bundled in this foundation build; nothing was installed.",
-        )),
+        SkillCommand::Print { name, resource } => {
+            let resource = skill::resource(&name, resource.as_deref())?;
+            let text = std::str::from_utf8(resource.bytes).map_err(|_| {
+                AppError::system("internal_error", "Bundled skill resource is not UTF-8.")
+            })?;
+            CommandOutput::success(text, skill::print_data(resource)?)
+        }
+        SkillCommand::Install(args) => {
+            let result = skill::install(
+                args.name.as_deref(),
+                args.agent,
+                args.target.as_deref(),
+                args.dry_run,
+                args.force,
+            )?;
+            let mut output = CommandOutput::success(result.text, result.data)?;
+            output.dry_run = result.dry_run;
+            output.mutation_applied = result.mutation_applied;
+            if result.warnings.is_empty() {
+                Ok(output)
+            } else {
+                output.with_warnings(result.warnings)
+            }
+        }
     }
 }
 

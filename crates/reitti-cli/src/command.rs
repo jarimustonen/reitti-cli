@@ -269,9 +269,11 @@ pub enum SkillCommand {
     /// List skills actually bundled in this binary.
     List,
     /// Print a bundled skill resource.
+    #[command(visible_alias = "show")]
     Print {
+        #[arg(value_parser = nonblank)]
         name: String,
-        #[arg(long)]
+        #[arg(long, value_parser = nonblank, value_name = "PATH")]
         resource: Option<String>,
     },
     /// Install bundled skills without clobbering by default.
@@ -280,6 +282,7 @@ pub enum SkillCommand {
 
 #[derive(Debug, Args)]
 pub struct SkillInstallArgs {
+    #[arg(value_parser = nonblank)]
     pub name: Option<String>,
     #[arg(long, value_enum, default_value = "all")]
     pub agent: AgentArg,

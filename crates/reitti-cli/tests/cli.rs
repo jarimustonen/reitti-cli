@@ -62,7 +62,9 @@ fn equivalent_version_spellings_are_byte_identical() {
                 Some("tarball" | "vendored")
             )),
         }
-        assert_eq!(value["data"]["skills"], serde_json::json!([]));
+        assert_eq!(value["data"]["skills"][0]["name"], "reitti");
+        assert_eq!(value["data"]["skills"][0]["cli_version"], "0.0.0");
+        assert_eq!(value["data"]["skills"][0]["schema_version"], 1);
     }
     for output in &outputs[1..] {
         assert_eq!(output.stdout, outputs[0].stdout);

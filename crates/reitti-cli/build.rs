@@ -1,11 +1,15 @@
 #[path = "src/build_provenance.rs"]
 mod build_provenance;
+#[path = "src/skill_manifest.rs"]
+mod skill_manifest;
 
 use std::{env, path::Path};
 
 fn main() {
     println!("cargo:rerun-if-env-changed=REITTI_BUILD_COMMIT");
     println!("cargo:rerun-if-env-changed=REITTI_BUILD_PROVENANCE_KIND");
+
+    verify_bundled_skill();
 
     if let Ok(commit) = env::var("REITTI_BUILD_COMMIT") {
         build_provenance::validate_sha(&commit)
@@ -42,6 +46,27 @@ fn main() {
         stamp.commit.as_deref().unwrap_or(""),
         &stamp.kind,
         &stamp.note,
+    );
+}
+
+fn verify_bundled_skill() {
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest.join("skills/reitti/SKILL.md");
+    println!("cargo:rerun-if-changed={}", path.display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        manifest
+            .join("skills/reitti/references/workflows.md")
+            .display()
+    );
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|error| {
+        panic!("could not read bundled skill '{}': {error}", path.display())
+    });
+    skill_manifest::verify(&text, env!("CARGO_PKG_VERSION"))
+        .unwrap_or_else(|error| panic!("invalid bundled skill: {error}"));
+    assert!(
+        !text.contains("{{") && !text.contains("}}"),
+        "bundled skill contains an unexpanded template placeholder"
     );
 }
 

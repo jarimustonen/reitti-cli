@@ -54,9 +54,8 @@ pub fn version_data() -> VersionData {
         },
         schema_version: SCHEMA_VERSION,
         supported_schemas: [SCHEMA_VERSION],
-        // The skill implementation is owned by @ship-agent-skill. An empty
-        // catalogue is truthful until a resource is compiled into the binary.
-        skills: Vec::new(),
+        skills: vec![serde_json::to_value(crate::skill::metadata())
+            .expect("static skill metadata serializes")],
     }
 }
 
@@ -96,7 +95,7 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
                 "build_provenance":{"type":"object","required":["kind","note"],"properties":{"kind":{"enum":["git","tarball","vendored","ci-injected"]},"note":{"type":"string"}},"additionalProperties":true},
                 "schema_version":{"const":1},
                 "supported_schemas":{"type":"array","items":{"type":"integer"}},
-                "skills":{"type":"array","items":{"type":"object"}}
+                "skills":{"type":"array","minItems":1,"maxItems":1,"items":skill_metadata_schema()}
             }),
         ),
         "config-path" => object_schema(
@@ -123,11 +122,24 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
             &["online", "checks", "summary"],
             json!({"online":{"type":"boolean"},"checks":{"type":"array","items":object_schema(&["id","status","message","fix_suggestion","details"],json!({"id":{"type":"string"},"status":{"enum":["ok","warn","fail"]},"message":{"type":"string"},"fix_suggestion":{"type":["string","null"]},"details":{"type":"object"}}))},"summary":object_schema(&["ok","warn","fail"],json!({"ok":{"type":"integer","minimum":0},"warn":{"type":"integer","minimum":0},"fail":{"type":"integer","minimum":0}}))}),
         ),
-        "skill-list" => object_schema(
+        "skill-list" => strict_object_schema(
             &["skills", "supported_agents", "install"],
-            json!({"skills":{"type":"array"},"supported_agents":{"type":"array","items":{"enum":["claude","pi","codex"]}},"install":{"type":"object","required":["selection_flag","default","accepted_values","target_flag","dry_run_flag","force_flag","interactive","no_clobber_default","overwrite_requires_force","layouts"]}}),
+            json!({
+                "skills":{"type":"array","minItems":1,"maxItems":1,"items":skill_metadata_schema()},
+                "supported_agents":{"const":["claude","pi","codex"]},
+                "install":strict_object_schema(
+                    &["selection_flag","default","accepted_values","target_flag","dry_run_flag","force_flag","interactive","no_clobber_default","overwrite_requires_force","layouts"],
+                    json!({
+                        "selection_flag":{"const":"--agent"},"default":{"const":"all"},
+                        "accepted_values":{"const":["claude","pi","codex","all"]},
+                        "target_flag":{"const":"--target"},"dry_run_flag":{"const":"--dry-run"},"force_flag":{"const":"--force"},
+                        "interactive":{"const":false},"no_clobber_default":{"const":true},"overwrite_requires_force":{"const":true},
+                        "layouts":{"type":"array","minItems":3,"maxItems":3,"items":strict_object_schema(&["agent","path","form"],json!({"agent":{"enum":["claude","pi","codex"]},"path":{"type":"string","minLength":1},"form":{"const":"agent-skills-tree"}}))}
+                    })
+                )
+            }),
         ),
-        "skill-print" => object_schema(
+        "skill-print" => strict_object_schema(
             &[
                 "name",
                 "cli_version",
@@ -136,12 +148,18 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
                 "path_in_repo",
                 "resources",
             ],
-            json!({"name":{"type":"string"},"cli_version":{"type":"string"},"schema_version_skill":{"type":"integer"},"content":{"type":"string"},"path_in_repo":{"type":"string"},"resources":string_array_schema()}),
+            json!({"name":{"const":"reitti"},"cli_version":{"const":env!("CARGO_PKG_VERSION")},"schema_version_skill":{"const":1},"content":{"type":"string"},"path_in_repo":{"type":"string","pattern":"^crates/reitti-cli/skills/reitti/"},"resources":{"const":crate::skill::resource_paths()}}),
         ),
-        "skill-install" => object_schema(
-            &["name", "agent", "installed", "existed", "skipped"],
-            json!({"name":{"type":"string"},"agent":{"enum":["claude","pi","codex","all"]},"installed":string_array_schema(),"existed":string_array_schema(),"skipped":string_array_schema()}),
-        ),
+        "skill-install" => json!({"oneOf":[
+            strict_object_schema(
+                &["name", "agent", "installed", "existed", "skipped"],
+                json!({"name":{"const":"reitti"},"agent":{"enum":["claude","pi","codex","all"]},"installed":string_array_schema(),"existed":string_array_schema(),"skipped":string_array_schema()}),
+            ),
+            strict_object_schema(
+                &["dry_run", "would"],
+                json!({"dry_run":{"const":true},"would":{"type":"array","minItems":1,"maxItems":3,"items":strict_planning_item_schema()}}),
+            )
+        ]}),
         "error" => object_schema(
             &["schema_version", "error"],
             json!({"schema_version":{"const":1},"error":{"type":"object","required":["code","message","retryable","details"],"properties":{"code":{"type":"string"},"message":{"type":"string"},"invalid_value":{},"expected":{},"retryable":{"type":"boolean"},"details":{"type":"object"}},"additionalProperties":true}}),
@@ -174,6 +192,32 @@ pub fn schema(name: &str) -> Result<Value, AppError> {
 
 fn object_schema(required: &[&str], properties: Value) -> Value {
     json!({"type":"object","required":required,"properties":properties,"additionalProperties":true})
+}
+fn strict_object_schema(required: &[&str], properties: Value) -> Value {
+    json!({"type":"object","required":required,"properties":properties,"additionalProperties":false})
+}
+fn skill_metadata_schema() -> Value {
+    strict_object_schema(
+        &["name", "description", "cli_version", "schema_version"],
+        json!({
+            "name":{"const":"reitti"},
+            "description":{"type":"string","maxLength":1024},
+            "cli_version":{"const":env!("CARGO_PKG_VERSION")},
+            "schema_version":{"const":1}
+        }),
+    )
+}
+fn strict_planning_item_schema() -> Value {
+    strict_object_schema(
+        &[
+            "action",
+            "resource",
+            "input",
+            "known_effects",
+            "unknown_until_apply",
+        ],
+        json!({"action":{"enum":["create","replace","none"]},"resource":{"const":"agent-skill-tree"},"input":{"type":"object","required":["name","agent","destination"],"properties":{"name":{"const":"reitti"},"agent":{"enum":["claude","pi","codex"]},"destination":{"type":"string"}},"additionalProperties":false},"known_effects":{"type":"object"},"unknown_until_apply":{"type":"array","maxItems":0}}),
+    )
 }
 fn string_array_schema() -> Value {
     json!({"type":"array","items":{"type":"string"}})
@@ -296,14 +340,7 @@ pub fn doctor(
         Ok(_) => DoctorCheck { id: "credential.subscription_key", status: CheckStatus::Fail, message: "Digitransit subscription key is absent.".to_owned(), fix_suggestion: Some("Set DIGITRANSIT_SUBSCRIPTION_KEY or pipe one line to reitti config update --subscription-key-stdin.".to_owned()), details: json!({"present": false}) },
         Err(_) => DoctorCheck { id: "credential.subscription_key", status: CheckStatus::Fail, message: "Credential presence could not be determined because configuration is invalid.".to_owned(), fix_suggestion: Some("Fix config.values first.".to_owned()), details: json!({"present": null}) },
     });
-    checks.push(DoctorCheck {
-        id: "skill.sync",
-        status: CheckStatus::Ok,
-        message: "No companion skill is bundled in this foundation build; no sync claim is made."
-            .to_owned(),
-        fix_suggestion: None,
-        details: json!({"bundled": []}),
-    });
+    checks.push(skill_sync_check());
     checks.push(match &loaded {
         Ok(config) if config.private_markers.0.is_empty() => DoctorCheck {
             id: "public_artifacts.private_markers",
@@ -316,11 +353,13 @@ pub fn doctor(
         },
         Ok(config) => {
             let bundled_text = format!(
-                "{}\n{}\n{}\n{}\n{}\n{}\n{}",
+                "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
                 include_str!("../../../README.md"),
                 include_str!("../../../CONTRIBUTING.md"),
                 include_str!("../../../SECURITY.md"),
                 include_str!("../../../LICENSE"),
+                std::str::from_utf8(crate::skill::RESOURCES[0].bytes).unwrap_or(""),
+                std::str::from_utf8(crate::skill::RESOURCES[1].bytes).unwrap_or(""),
                 env!("CARGO_PKG_NAME"),
                 config::DEFAULT_ROUTING_URL,
                 config::DEFAULT_GEOCODING_URL
@@ -400,6 +439,79 @@ pub fn doctor(
         online,
         checks,
         summary,
+    }
+}
+
+fn skill_sync_check() -> DoctorCheck {
+    let Some(home) = std::env::var_os("HOME") else {
+        return DoctorCheck {
+            id: "skill.sync",
+            status: CheckStatus::Warn,
+            message:
+                "Installed companion-skill versions could not be checked because HOME is not set."
+                    .to_owned(),
+            fix_suggestion: Some("Set HOME, then rerun reitti doctor.".to_owned()),
+            details: json!({"installed": []}),
+        };
+    };
+    let layouts = [
+        ("claude", ".claude/skills/reitti/SKILL.md"),
+        ("pi", ".pi/agent/skills/reitti/SKILL.md"),
+        ("codex", ".codex/skills/reitti/SKILL.md"),
+    ];
+    let mut installed = Vec::new();
+    let mut mismatches = Vec::new();
+    for (agent, relative) in layouts {
+        let path = std::path::PathBuf::from(&home).join(relative);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => {
+                let frontmatter = crate::skill_manifest::parse(&text).ok();
+                let version = frontmatter
+                    .as_ref()
+                    .map(|value| value.cli_version.to_owned());
+                let schema_version = frontmatter.as_ref().map(|value| value.schema_version);
+                installed.push(json!({"agent":agent,"path":path,"cli_version":version,"schema_version":schema_version}));
+                if version.as_deref() != Some(crate::skill::CLI_VERSION)
+                    || schema_version != Some(crate::skill::SKILL_SCHEMA_VERSION)
+                {
+                    mismatches.push(agent);
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                installed.push(json!({"agent":agent,"path":path,"error":error.to_string()}));
+                mismatches.push(agent);
+            }
+        }
+    }
+    if mismatches.is_empty() {
+        DoctorCheck {
+            id: "skill.sync",
+            status: CheckStatus::Ok,
+            message: if installed.is_empty() {
+                format!(
+                    "Bundled skill '{}' is version {}; no installed copies were found.",
+                    crate::skill::NAME,
+                    crate::skill::CLI_VERSION
+                )
+            } else {
+                format!(
+                    "All {} installed companion-skill copy/copies match CLI version {}.",
+                    installed.len(),
+                    crate::skill::CLI_VERSION
+                )
+            },
+            fix_suggestion: None,
+            details: json!({"bundled": [crate::skill::metadata()], "installed": installed}),
+        }
+    } else {
+        DoctorCheck {
+            id: "skill.sync",
+            status: CheckStatus::Warn,
+            message: format!("Installed companion skill is missing or version-mismatched for: {}.", mismatches.join(", ")),
+            fix_suggestion: Some("Review local skill changes, then run reitti skill install reitti --agent all --force if replacement is intended.".to_owned()),
+            details: json!({"bundled": [crate::skill::metadata()], "installed": installed, "mismatched_agents": mismatches}),
+        }
     }
 }
 
