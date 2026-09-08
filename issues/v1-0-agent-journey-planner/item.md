@@ -59,3 +59,8 @@ The epic analysis and initial product plan are in `analysis.md` and `plan.md` be
 ### 2026-09-08T07:51:41Z · @codex
 
 The user authorizes autonomous CLI design, full implementation, onboarding/configuration, documentation and shipshape OSS preparation across successive work rounds. Preserve GitHub repository privacy. The CLI provides composable facts for personal journey planning and travel assistance; agents own complex workflows. Prepare a polished usable open-source project, including clean-machine installation and configuration, rather than stopping after the CLI design round.
+
+### 2026-09-08T07:54:24Z · @codex
+
+The user explicitly requires primary-agent ownership of quality: independently review and revise delegated work, especially complex design. Worker reports and passing checks are evidence, not automatic acceptance. The primary agent reviews the CLI contract before implementation and inspects implementation behavior before release readiness is claimed.
+
