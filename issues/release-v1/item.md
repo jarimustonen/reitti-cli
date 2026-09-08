@@ -8,7 +8,7 @@ priority: normal
 epic: v1-0-agent-journey-planner
 lane: release
 lane_seq: 10
-blocked_by: ['@ship-agent-skill']
+blocked_by: ['@ship-agent-skill', '@prepare-oss-foundations']
 ---
 
 # Package and verify the v1.0 release

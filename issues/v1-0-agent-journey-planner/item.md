@@ -53,3 +53,9 @@ Excluded from v1.0: ticket purchase, account-specific HSL data, a graphical map 
 ## Comments
 
 The epic analysis and initial product plan are in `analysis.md` and `plan.md` beside this file.
+
+## Decisions
+
+### 2026-09-08T07:51:41Z · @codex
+
+The user authorizes autonomous CLI design, full implementation, onboarding/configuration, documentation and shipshape OSS preparation across successive work rounds. Preserve GitHub repository privacy. The CLI provides composable facts for personal journey planning and travel assistance; agents own complex workflows. Prepare a polished usable open-source project, including clean-machine installation and configuration, rather than stopping after the CLI design round.
