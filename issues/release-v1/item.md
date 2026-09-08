@@ -38,3 +38,7 @@ Release preflight evidence: GitHub documents that artifact attestations in priva
 ### Maintainer steering: macOS build runner
 
 Use the existing self-hosted macOS ARM64 machine used by the other family projects. This explicit maintainer instruction supersedes the initial hosted-only assumption. Configure and verify a dedicated repository runner; preserve the cargo-dist custom-runner override through workflow generation. Keep machine-specific connection details out of public documentation.
+
+### Maintainer steering: ordinary GitHub CI
+
+Ordinary push and pull-request GitHub CI is intentionally absent. Remove the broken contribution workflow, run required validation and secret scanning locally, and do not regenerate ordinary CI merely to satisfy an audit. Preserve the generated tag-triggered cargo-dist release workflow and its self-hosted macOS ARM64 runner override.

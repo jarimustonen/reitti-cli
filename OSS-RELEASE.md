@@ -29,7 +29,7 @@ docs_site: none
 
 ## Rationale
 
-- **Maturity: MVP** — the implemented CLI, deterministic tests, contribution CI, and release infrastructure support a first stable release while keeping policy proportionate to a single-maintainer project.
+- **Maturity: MVP** — the implemented CLI, deterministic local tests, and release infrastructure support a first stable release while keeping policy proportionate to a single-maintainer project.
 - **Ecosystem: Rust** — the workspace contains `reitti-core` and the `reitti` binary package (`reitti-cli`).
 - **Release target: `reitti-cli` on GitHub Releases** — no crates.io package is published. Source installation remains possible from the repository, while cargo-dist owns the future binary release target.
 - **Distribution: cargo-dist via GitHub Releases** — future releases provide binaries for macOS arm64 and Linux arm64/x86_64 plus a shell installer. Intel macOS and Windows are intentionally unsupported.
@@ -37,12 +37,13 @@ docs_site: none
 - **Changelog: curated from issuectl trailers** — maintainers select user-facing entries from the repository's issue-linked commits.
 - **Provenance: keyless** — the generated GitHub release automation requests artifact attestations. Capability must be established by an actual workflow run; private/internal repositories require GitHub Enterprise Cloud. Checksums and the binary's exact source commit remain required evidence regardless.
 - **License: MIT** — the workspace manifest declares MIT, matching the planned public license in `README.md`.
-- **Documentation and health signals** — no separate docs site is planned, and only the license badge is enabled until CI exists. Dependency automation is deferred to the release integration slice.
+- **Documentation and health signals** — no separate docs site is planned, and only the license badge is enabled. Ordinary push and pull-request CI is intentionally absent by maintainer decision; dependency automation is also undeclared.
 
 ## Release notes
 
 - Repository visibility remains the maintainer's decision. This contract does not change GitHub settings.
 - Do not create tags, GitHub releases, or public registry entries during preparation.
-- A v1.0 cut requires the generated cargo-dist configuration and CI, final release notes, clean-machine installation, three-platform artifact smoke tests, authenticated provider acceptance, and inspection of the actual workflow result.
+- A v1.0 cut requires the generated cargo-dist configuration and tag-triggered release workflow, final release notes, clean-machine installation, three-platform artifact smoke tests, authenticated provider acceptance, and inspection of the actual release-workflow result.
+- Do not regenerate ordinary push or pull-request CI merely to satisfy a release-readiness audit. The required merge gates and secret scan run locally; the generated cargo-dist release workflow remains.
 - GitHub Release assets and pushed tags are durable release actions; review the release plan before cutting them.
 - Transit and map data keep their upstream licenses and attribution requirements; the MIT license covers this repository's software, not third-party data.

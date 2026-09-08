@@ -18,7 +18,7 @@ The repository pins cargo-dist 0.28.2. Its release plan creates:
 
 ### Platform guarantee
 
-The channel publishes prebuilt binaries for macOS arm64 and static musl Linux on arm64 and x86_64. There is no prebuilt or support guarantee outside those three declared targets. The macOS archive is built on the maintainer-selected self-hosted macOS ARM64 runner. That trusted runner is reserved for tag-triggered release builds; pull-request CI remains on hosted infrastructure.
+The channel publishes prebuilt binaries for macOS arm64 and static musl Linux on arm64 and x86_64. There is no prebuilt or support guarantee outside those three declared targets. The macOS archive is built on the maintainer-selected self-hosted macOS ARM64 runner. That trusted runner is reserved for tag-triggered release builds. Ordinary push and pull-request CI is intentionally absent.
 
 ### Build identity and private-path removal
 
@@ -58,11 +58,11 @@ After changing `distribution` in `OSS-RELEASE.md`:
 4. inspect `dist plan --output-format=json` and read artifact paths from its JSON (`target/distrib` in cargo-dist 0.28.2);
 5. verify all three target archives, the shell installer, aggregate and per-file checksums, source archive, and exact build commit;
 6. smoke-test every executable and the shell installer's platform selection in disposable homes; and
-7. inspect the actual GitHub workflow before claiming CI or attestations passed.
+7. inspect the actual tag-triggered GitHub release workflow before claiming release jobs or attestations passed.
 
 GitHub artifact attestations remain configured as the contract's desired keyless provenance. Private/internal repositories require GitHub Enterprise Cloud for attestations, and this repository's capability has not been verified. If an actual private release run cannot attest, report that limitation rather than claiming provenance that was not produced. Checksums and the exact build commit remain mandatory evidence; do not introduce an unapproved signing system.
 <!-- shipshape-dist:managed:end -->
 
 ## Release boundary
 
-The repository remains private until the maintainer changes visibility. Release preparation does not itself authorize a tag, GitHub Release, crates.io or Homebrew publication, or billing and security setting changes. Hosted Actions have most recently been blocked before job execution by an account billing/spending restriction; local checks are not a substitute for a green workflow.
+The repository remains private until the maintainer changes visibility. Release preparation does not itself authorize a tag, GitHub Release, crates.io or Homebrew publication, or billing and security setting changes. Ordinary push and pull-request CI is intentionally absent by maintainer decision and must not be regenerated merely to satisfy an audit. The generated tag-triggered cargo-dist workflow remains the release path; local checks are not a substitute for a successful release run.

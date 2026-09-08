@@ -22,7 +22,7 @@ The entries below describe the intended first stable release, v1.0.0. They remai
 
 ### Changed
 
-- Contribution CI now checks formatting, Clippy, Rust tests on stable and Rust 1.88, credential-free Digitransit fixtures, and committed-secret history.
+- Ordinary GitHub push and pull-request CI is intentionally absent; required validation and secret scanning run locally, while the tag-triggered cargo-dist release workflow remains.
 
 ### Fixed
 

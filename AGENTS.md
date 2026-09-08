@@ -12,7 +12,9 @@ This project follows the AI-first CLI conventions in [`AGENTS-AI-FIRST-CLI.md`](
 
 ## Validation and release work
 
-Run these gates before merging implementation changes:
+Ordinary GitHub push and pull-request CI is intentionally absent by maintainer
+decision. Do not regenerate it merely to satisfy a readiness audit. Run these
+gates locally before merging changes:
 
 ```sh
 cargo fmt --all --check
@@ -20,6 +22,12 @@ cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
 python3 scripts/probe-digitransit.py check
 issuectl doctor --json
+```
+
+Before a release, scan tracked Git history locally without exposing findings:
+
+```sh
+gitleaks git --redact --no-banner .
 ```
 
 Add relevant deterministic integration tests for CLI contracts and provider failures.
@@ -48,9 +56,10 @@ automatically file every residual as an issue.
 The maintainer requires the existing self-hosted macOS ARM64 build machine for
 this project’s macOS release artifacts. Preserve the cargo-dist
 `[dist.github-custom-runners]` override for `aarch64-apple-darwin`; regenerate
-the workflow with cargo-dist after applying it. Do not replace this choice with
-a hosted macOS runner during shipshape generation. Untrusted pull-request jobs
-run on hosted runners; the self-hosted machine runs trusted release builds.
+the tag-triggered release workflow with cargo-dist after applying it. Do not
+replace this choice with a hosted macOS runner during shipshape generation.
+The self-hosted machine runs trusted release builds only; there is no ordinary
+push or pull-request workflow.
 
 ## Documentation Pattern
 

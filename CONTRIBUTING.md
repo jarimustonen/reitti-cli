@@ -28,7 +28,9 @@ The maintainers curate release notes from issue-linked commits; contributors do 
 
 ## Required checks
 
-Run the Rust checks before opening a pull request:
+This project intentionally has no automatic GitHub checks on pushes or pull
+requests. Run the Rust checks locally before opening a pull request and report
+the results:
 
 ```sh
 cargo fmt --all --check
@@ -43,7 +45,18 @@ python3 scripts/probe-digitransit.py check
 issuectl doctor --json
 ```
 
-Contributors do not need `issuectl` to build, use, or make an ordinary code contribution. Maintainers run the issue-repository check before merge; contributors who already use `issuectl` may run it locally. A pull request should not merge until the full gate passes. If a check cannot run in your environment, state that clearly in the pull request.
+Contributors do not need `issuectl` to build, use, or make an ordinary code contribution. Maintainers run the issue-repository check before merge; contributors who already use `issuectl` may run it locally. A pull request should not merge until the full local gate passes. If a check cannot run in your environment, state that clearly in the pull request.
+
+Before merging or releasing, a maintainer also scans the complete tracked Git
+history with a current Gitleaks installation. Redaction keeps any detected value
+out of terminal output:
+
+```sh
+gitleaks git --redact --no-banner .
+```
+
+Investigate every finding and rotate any exposed credential; never paste an
+unredacted finding into a pull request, issue, or build log.
 
 ## Pull requests
 

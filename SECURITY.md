@@ -31,6 +31,20 @@ The main security surfaces are:
 
 The CLI sends credentials only in the `digitransit-subscription-key` request header, redacts them from ordinary configuration output and diagnostics, rejects redirects, and bounds provider response processing. Security reports should still cover any observed failure of those controls.
 
+## Local secret scanning
+
+The repository intentionally has no automatic push or pull-request secret-scan
+job. Before merging or releasing, maintainers scan the complete tracked Git
+history locally with a current Gitleaks installation:
+
+```sh
+gitleaks git --redact --no-banner .
+```
+
+Investigate every finding. If a real credential entered the repository, rotate
+or revoke it first, then remove it from the repository and history as needed.
+Never copy an unredacted finding into an issue, pull request, transcript, or log.
+
 ## Supported versions
 
 No GitHub Release has been published yet. After v1.0.0 is released, the latest release will receive security fixes. This section will be updated if support expands to additional release lines.
