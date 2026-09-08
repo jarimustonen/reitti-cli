@@ -3,7 +3,7 @@ created: 2026-09-08
 updated: 2026-09-08
 type: feature
 reporter: jarimustonen
-status: open
+status: done
 priority: normal
 epic: v1-0-agent-journey-planner
 lane: foundation
@@ -12,6 +12,9 @@ blocked_by: ['@validate-data-contracts']
 commits:
 - hash: a3a539e
   summary: define reitti v1 CLI contract
+- hash: a1ceb98
+  summary: refine reitti CLI contract after review
+closed: 2026-09-08
 ---
 
 # Design the agent-first CLI and result schema
@@ -46,6 +49,11 @@ The normative implementation contract is in [`design.md`](design.md).
 ### 2026-09-08T08:01:25Z · @issuectl
 
 Accepted design delivered in design.md; all required repository gates and offline Digitransit fixture validation passed.
+
+### 2026-09-08T08:08:20Z · @issuectl
+
+Primary-agent design review addressed: offline-by-default doctor and exit mapping, honest coordinate scope, raw typed stop IDs, required navigation fields with optional bounded geometry, alert relevance union, corrected journey arithmetic, explicit single-attempt client policy, URN schema IDs, and removal of color/doctor mutation.
+
 
 ## Reopen Notes — 2026-09-08
 

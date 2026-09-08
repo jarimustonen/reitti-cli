@@ -34,7 +34,7 @@ Excluded from v1.0: ticket purchase, account-specific HSL data, a graphical map 
 ## Issues
 
 - [ ] @validate-data-contracts — validate current endpoints, licensing, and fixtures
-- [ ] @design-cli-contract — define the command and JSON contracts
+- [x] @design-cli-contract — define the command and JSON contracts
 - [ ] @scaffold-rust-workspace — establish the testable Rust foundation
 - [ ] @implement-digitransit-client — implement typed data access
 - [ ] @resolve-journey-locations — make endpoint resolution safe and retryable
