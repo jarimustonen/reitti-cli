@@ -1009,12 +1009,16 @@ and alerts. It teaches this safe workflow:
 }
 ```
 
-No selector and `--agent all` both install all three native trees. `--target`
-changes only the base. Install is atomic, no-clobber by default, and supports a
-truthful planning envelope. `skill print reitti` is byte-identical to bundled
+No selector and `--agent all` both install all three native trees. The default
+base is HOME; `--target` changes only that base, not the selected user-level
+layouts. Preflight every selected destination and install each complete tree
+atomically, with no-clobber by default and a truthful planning envelope. Report
+actually applied destinations if a later destination fails; do not claim one
+atomic transaction across all runtime directories. `skill print reitti` is byte-identical to bundled
 `SKILL.md`; `--resource` prints another bundled support file. JSON print data is
 `{name,cli_version,schema_version_skill,content,path_in_repo,resources}`. An
-older installed skill is replaced with a warning; a newer one needs `--force`.
+identical installed tree may be reported unchanged without writing it; every
+differing existing tree needs `--force`, including older versions.
 Frontmatter description is at most 1024 characters and carries matching
 `cli_version` and `schema_version`.
 
