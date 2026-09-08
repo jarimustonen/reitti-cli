@@ -32,3 +32,7 @@ The primary agent exported only tracked files from commit `6d50821` into a dispo
 The primary agent independently ran all five repository gates on main commit `36165ca`: formatting, strict Clippy, all 44 Rust tests, 21 credential-free provider fixtures, and issue metadata validation passed. The same tracked source snapshot, exported without Git metadata or ignored files, passed all 44 tests in the existing Linux ARM64 container with Rust 1.88. The container was removed afterward. This extends MSRV/source-archive evidence through the real HTTP provider layer; it is still not a musl release artifact or hosted CI claim. Main was pushed to the private GitHub repository.
 
 A local redacted Gitleaks scan of the 39 commits preceding the client landing found no leaks. The final release must repeat the scan after remaining implementation lands.
+
+## Runner toolchain path follow-up
+
+A later preflight found an existing rustup installation and stable ARM64 toolchain on the macOS machine, with Cargo 1.98.1 available. The dedicated repository runner initially used only the Homebrew/system PATH. Its PATH was updated to include the existing rustup-managed tools first, and only this repository's idle runner service was restarted successfully. No toolchain was installed by this change. This removes a tool-discovery problem before the generated release workflow runs; actual artifact builds remain pending.
