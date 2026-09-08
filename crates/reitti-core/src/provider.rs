@@ -103,7 +103,6 @@ pub struct DepartureRequest {
     pub at: DateTime<FixedOffset>,
     pub window_seconds: u32,
     pub limit: u8,
-    pub modes: Vec<Mode>,
 }
 #[derive(Debug, Clone)]
 pub struct AlertRequest {

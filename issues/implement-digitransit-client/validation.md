@@ -105,7 +105,8 @@ must not be presented as permanently current live transit data.
 
 The typed adapter follows deployed nullability rather than the abbreviated
 examples in the first design draft. `Alert.alertHeaderText` is nullable (the
-handler can display the description when available), and a null alert entity
+handler can display the required description, including an empty source string,
+when useful), and a null alert entity
 list is retained as explicit unknown scope for conservative relevance handling.
 Nullable leg steps produce an empty step list with `navigation_complete: false`;
 nullable interlining remains unknown. Nullable itinerary duration, waiting,
@@ -117,10 +118,24 @@ scheduled times, and source transfer count remain strict contract boundaries.
 
 Departure normalization treats nullable `realtime` and `realtimeDeparture` as
 unknown/scheduled-only evidence instead of rejecting the board. Service-day
-seconds are combined using the Europe/Helsinki service date independently of
-output timezone. Journey delay seconds are derived from the provider's explicit
+instants use checked `serviceDay + seconds` arithmetic. The service date is
+recovered independently in Europe/Helsinki by adding 12 hours to the service
+anchor first. This follows current OTP
+[`ServiceDateUtils`](https://github.com/opentripplanner/OpenTripPlanner/blob/dev-2.x/utils/src/main/java/org/opentripplanner/utils/time/ServiceDateUtils.java):
+start-of-service is local noon minus 12 elapsed hours, and adding 12 hours back
+is necessary on daylight-saving transition days. Offline regressions cover both
+2026 Helsinki transitions. Journey delay seconds are derived from the provider's explicit
 estimated and scheduled timestamps, which preserves negative (early) values
 without depending on a separately formatted duration string.
+
+The primary agent also ran the built CLI's complete `doctor --online --json`
+path in a temporary HOME/XDG config with a root-only environment credential.
+It exited 0 with empty stderr; both geocoding and routing checks were OK and
+reported exactly one request each. Seven other checks were OK, with the expected
+single warning for an unconfigured private-marker scan and no failures. No
+credential appeared in output. This independently verifies the production
+transport, sensitive subscription header, endpoint assembly, and both probe
+methods without requiring another live request from this worker.
 
 A separate bounded production verification used `dateTime.latestArrival` with
 `first: 2` for the public Kamppi-to-Espoo example. The deployed endpoint accepted

@@ -294,7 +294,7 @@ pub fn plan(data: &Value, include_geometry: bool) -> Result<PlanResult, Provider
         return Ok(PlanResult {
             itineraries: vec![],
             routing_errors: vec![],
-            complete: true,
+            complete: false,
             search_date_time: None,
         });
     }
@@ -315,18 +315,47 @@ pub fn plan(data: &Value, include_geometry: bool) -> Result<PlanResult, Provider
         .pointer("/pageInfo/hasNextPage")
         .and_then(Value::as_bool)
         .unwrap_or(true);
-    let mut geometry_points = 0usize;
-    let itineraries = connection
+    let edges = connection
         .get("edges")
         .and_then(Value::as_array)
-        .ok_or_else(|| contract("NavigationPlan"))?
+        .ok_or_else(|| contract("NavigationPlan"))?;
+    let declared_geometry_points = if include_geometry {
+        edges
+            .iter()
+            .flat_map(|edge| {
+                edge.pointer("/node/legs")
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+            })
+            .try_fold(0usize, |total, leg| {
+                match leg.get("legGeometry").filter(|value| !value.is_null()) {
+                    Some(geometry) => total
+                        .checked_add(
+                            geometry
+                                .get("length")
+                                .and_then(Value::as_u64)
+                                .and_then(|value| usize::try_from(value).ok())
+                                .ok_or_else(|| contract("NavigationPlan"))?,
+                        )
+                        .ok_or_else(|| contract("NavigationPlan")),
+                    None => Ok(total),
+                }
+            })?
+    } else {
+        0
+    };
+    let geometry_omitted = declared_geometry_points > 10_000;
+    let mut geometry_points = 0usize;
+    let itineraries = edges
         .iter()
         .enumerate()
         .map(|(index, e)| {
             itinerary(
                 e.get("node").ok_or_else(|| contract("NavigationPlan"))?,
                 index,
-                include_geometry,
+                include_geometry && !geometry_omitted,
+                geometry_omitted,
                 &mut geometry_points,
             )
         })
@@ -342,6 +371,7 @@ fn itinerary(
     v: &Value,
     source_index: usize,
     include_geometry: bool,
+    geometry_omitted: bool,
     total_points: &mut usize,
 ) -> Result<Itinerary, ProviderError> {
     let legs = v
@@ -350,9 +380,14 @@ fn itinerary(
         .ok_or_else(|| contract("NavigationPlan"))?
         .iter()
         .enumerate()
-        .map(|(i, l)| leg(l, i, include_geometry, total_points))
+        .map(|(i, l)| leg(l, i, include_geometry, geometry_omitted, total_points))
         .collect::<Result<Vec<_>, _>>()?;
-    let alerts = legs.iter().flat_map(|l| l.alerts.clone()).collect();
+    let mut alert_ids = std::collections::BTreeSet::new();
+    let alerts = legs
+        .iter()
+        .flat_map(|leg| leg.alerts.clone())
+        .filter(|alert| alert_ids.insert(alert.id.clone()))
+        .collect();
     Ok(Itinerary {
         source_index,
         start_time: datetime(v.get("start"), "NavigationPlan")?,
@@ -372,6 +407,7 @@ fn leg(
     v: &Value,
     index: usize,
     include_geometry: bool,
+    geometry_omitted: bool,
     total_points: &mut usize,
 ) -> Result<Leg, ProviderError> {
     let realtime = v.get("realtimeState").and_then(Value::as_str);
@@ -408,7 +444,8 @@ fn leg(
         Some(value) => Some(value.as_array().ok_or_else(|| contract("NavigationPlan"))?),
         None => None,
     };
-    let navigation_complete = all_steps.is_some_and(|steps| steps.len() <= 200);
+    let navigation_complete =
+        !geometry_omitted && all_steps.is_some_and(|steps| steps.len() <= 200);
     let steps = all_steps
         .into_iter()
         .flatten()
@@ -529,8 +566,8 @@ pub fn departure(v: &Value, platform: Option<String>) -> Result<Departure, Provi
     };
     let state = match v.get("realtimeState").and_then(Value::as_str) {
         Some(value) => rt_state(Some(value)),
-        None if realtime.is_none() => RealtimeState::Unknown,
-        None => RealtimeState::Scheduled,
+        None if realtime == Some(false) => RealtimeState::Scheduled,
+        None => RealtimeState::Unknown,
     };
     let service_utc = Utc
         .timestamp_opt(service, 0)
@@ -539,26 +576,27 @@ pub fn departure(v: &Value, platform: Option<String>) -> Result<Departure, Provi
     let helsinki: chrono_tz::Tz = "Europe/Helsinki"
         .parse()
         .map_err(|_| contract("departures"))?;
-    let service_date = service_utc.with_timezone(&helsinki).date_naive();
-    let midnight = helsinki
-        .from_local_datetime(
-            &service_date
-                .and_hms_opt(0, 0, 0)
-                .ok_or_else(|| contract("departures"))?,
-        )
+    // OTP anchors a service day at local noon minus 12 elapsed hours. Add
+    // 12 hours back before taking the Helsinki date, which matters on DST days.
+    let service_date = service_utc
+        .checked_add_signed(chrono::Duration::hours(12))
+        .ok_or_else(|| contract("departures"))?
+        .with_timezone(&helsinki)
+        .date_naive();
+    let scheduled_epoch = service
+        .checked_add(scheduled)
+        .ok_or_else(|| contract("departures"))?;
+    let scheduled_dt = Utc
+        .timestamp_opt(scheduled_epoch, 0)
         .single()
-        .ok_or_else(|| contract("departures"))?;
-    let scheduled_dt = midnight
-        .checked_add_signed(
-            chrono::Duration::try_seconds(scheduled).ok_or_else(|| contract("departures"))?,
-        )
-        .ok_or_else(|| contract("departures"))?;
+        .ok_or_else(|| contract("departures"))?
+        .with_timezone(&helsinki);
     let actual_dt = actual
         .map(|seconds| {
-            midnight
-                .checked_add_signed(
-                    chrono::Duration::try_seconds(seconds).ok_or_else(|| contract("departures"))?,
-                )
+            service
+                .checked_add(seconds)
+                .and_then(|epoch| Utc.timestamp_opt(epoch, 0).single())
+                .map(|time| time.with_timezone(&helsinki))
                 .ok_or_else(|| contract("departures"))
         })
         .transpose()?;
@@ -630,7 +668,7 @@ fn decode_component(bytes: &[u8], i: &mut usize) -> Result<i64, ProviderError> {
     loop {
         let byte = *bytes.get(*i).ok_or_else(|| contract("NavigationPlan"))?;
         *i += 1;
-        if !(63..=126).contains(&byte) || shift > 60 {
+        if !(63..=126).contains(&byte) || shift > 30 {
             return Err(contract("NavigationPlan"));
         }
         let chunk = (byte - 63) as u64;
@@ -648,8 +686,8 @@ fn decode_component(bytes: &[u8], i: &mut usize) -> Result<i64, ProviderError> {
 }
 fn rt_state(v: Option<&str>) -> RealtimeState {
     match v {
-        Some("UPDATED") => RealtimeState::Updated,
-        Some("CANCELLED") => RealtimeState::Cancelled,
+        Some("UPDATED" | "MODIFIED") => RealtimeState::Updated,
+        Some("CANCELED") => RealtimeState::Cancelled,
         Some("ADDED") => RealtimeState::Added,
         Some("SCHEDULED") | None => RealtimeState::Scheduled,
         _ => RealtimeState::Unknown,
@@ -733,6 +771,21 @@ fn datetime_opt(
         Some(_) => datetime(v, op).map(Some),
     }
 }
-fn snake(v: &str) -> String {
-    v.to_ascii_lowercase()
+pub(super) fn snake(value: &str) -> String {
+    if value
+        .bytes()
+        .all(|byte| byte.is_ascii_uppercase() || byte == b'_')
+    {
+        return value.to_ascii_lowercase();
+    }
+    let mut result = String::with_capacity(value.len() + 2);
+    let mut previous_lowercase = false;
+    for character in value.chars() {
+        if character.is_ascii_uppercase() && previous_lowercase {
+            result.push('_');
+        }
+        result.push(character.to_ascii_lowercase());
+        previous_lowercase = character.is_ascii_lowercase() || character.is_ascii_digit();
+    }
+    result
 }

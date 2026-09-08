@@ -847,7 +847,7 @@ fn foundation_documents_validate_against_bundled_support_schemas() {
 }
 
 #[test]
-fn all_domain_default_invocations_validate_before_incomplete_handler() {
+fn all_domain_default_invocations_require_credentials_before_provider_io() {
     let home = TempDir::new().unwrap();
     let cases: &[&[&str]] = &[
         &["--json", "location", "list", "--query", "Kamppi"],
@@ -865,17 +865,13 @@ fn all_domain_default_invocations_validate_before_incomplete_handler() {
         &["--json", "alert", "list"],
     ];
     for args in cases {
-        let output = reitti(home.path())
-            .env("DIGITRANSIT_SUBSCRIPTION_KEY", "test-key")
-            .args(*args)
-            .output()
-            .unwrap();
+        let output = reitti(home.path()).args(*args).output().unwrap();
         assert_eq!(
             output.status.code(),
-            Some(2),
+            Some(1),
             "args={args:?}, stderr={}",
             String::from_utf8_lossy(&output.stderr)
         );
-        assert!(String::from_utf8_lossy(&output.stderr).contains("feature_incomplete"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("credential_missing"));
     }
 }

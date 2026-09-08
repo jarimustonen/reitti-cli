@@ -3,7 +3,7 @@ use crate::client::{
     HttpFuture, HttpMethod, HttpRequest, HttpResponse, HttpTransport, ReqwestTransport,
     MAX_RESPONSE_BYTES,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use reitti_core::*;
 use serde_json::{json, Value};
 use std::{
@@ -127,6 +127,13 @@ async fn geocoding_preserves_v1_path_encodes_input_and_normalizes_candidates() {
         "secret-canary"
     );
     assert!(!format!("{request:?}").contains("secret-canary"));
+    let mut swedish = f["response"]["body"].clone();
+    swedish["features"][0]["properties"]["source"] = json!("openstreetmap");
+    swedish["features"][0]["properties"]["locality"] = json!("Helsingfors");
+    assert_eq!(
+        normalize::locations(&swedish).unwrap()[0].service_area,
+        ServiceArea::Inside
+    );
 }
 
 #[tokio::test]
@@ -209,6 +216,17 @@ async fn rich_plan_uses_typed_variables_and_preserves_navigation() {
     assert!(body.get("maxWalkDistance").is_none());
 }
 
+#[test]
+fn oversized_geometry_is_omitted_without_looking_complete() {
+    let mut data = fixture("routing-navigation-rich.json")["response"]["body"]["data"].clone();
+    data["planConnection"]["edges"][0]["node"]["legs"][0]["legGeometry"]["length"] = json!(10_001);
+    let plan = normalize::plan(&data, true).unwrap();
+    assert!(plan.itineraries[0]
+        .legs
+        .iter()
+        .all(|leg| leg.geometry.is_none() && !leg.navigation_complete));
+}
+
 #[tokio::test]
 async fn stop_departure_alert_and_no_result_methods_keep_handler_owned_semantics() {
     let mut departures = fixture("routing-departures.json")["response"]["body"].clone();
@@ -245,7 +263,6 @@ async fn stop_departure_alert_and_no_result_methods_keep_handler_owned_semantics
             at: DateTime::parse_from_rfc3339("2026-09-08T09:55:00+03:00").unwrap(),
             window_seconds: 7200,
             limit: 3,
-            modes: vec![Mode::Tram],
         })
         .await
         .unwrap()
@@ -324,6 +341,34 @@ fn nullable_provider_evidence_remains_unknown_and_early_delay_is_signed() {
     assert_eq!(plan.itineraries[0].legs[0].start.delay_seconds, Some(-30));
     assert!(!plan.itineraries[0].legs[0].navigation_complete);
     assert_eq!(plan.itineraries[0].legs[0].continues_previous_vehicle, None);
+}
+
+#[test]
+fn cancellation_kinds_and_dst_service_dates_follow_deployed_otp_semantics() {
+    assert_eq!(normalize::snake("WALK"), "walk");
+    assert_eq!(normalize::snake("HARD_LEFT"), "hard_left");
+    assert_eq!(normalize::snake("StopOnRoute"), "stop_on_route");
+    assert_eq!(normalize::snake("LocationGroup"), "location_group");
+    let helsinki: chrono_tz::Tz = "Europe/Helsinki".parse().unwrap();
+    for (year, month, day, expected) in [
+        (2026, 3, 29, "2026-03-29T02:00:00+02:00"),
+        (2026, 10, 25, "2026-10-25T03:00:00+02:00"),
+    ] {
+        let noon = helsinki
+            .with_ymd_and_hms(year, month, day, 12, 0, 0)
+            .single()
+            .unwrap();
+        let service_day = noon
+            .checked_sub_signed(chrono::Duration::hours(12))
+            .unwrap()
+            .timestamp();
+        let row = json!({"headsign":"Test","realtime":true,"realtimeDeparture":10830,"realtimeState":"CANCELED","scheduledDeparture":10800,"serviceDay":service_day,"trip":{"gtfsId":"HSL:t","route":{"gtfsId":"HSL:r","shortName":"1","longName":null,"mode":"BUS"}}});
+        let departure = normalize::departure(&row, None).unwrap();
+        assert_eq!(departure.service_date, noon.date_naive());
+        assert_eq!(departure.departure.scheduled_time.to_rfc3339(), expected);
+        assert!(departure.cancelled);
+        assert_eq!(departure.departure.state, RealtimeState::Cancelled);
+    }
 }
 
 #[tokio::test]

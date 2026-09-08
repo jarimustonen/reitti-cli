@@ -150,8 +150,10 @@ impl<'a> DigitransitRouter<'a> {
             return Err(contract("StopSearch"));
         }
         let (query, vars, near) = match r.search {
-            StopSearch::Name(name) => ("query StopSearch($name:String!){stops(name:$name){$STOP_FIELDS}}".replace("$STOP_FIELDS", STOP_FIELDS), json!({"name":name}), false),
-            StopSearch::Nearby { coordinates, radius_m } => ("query StopNearby($lat:Float!,$lon:Float!,$radius:Int!,$first:Int!){stopsByRadius(lat:$lat lon:$lon radius:$radius first:$first){edges{node{distance stop{$STOP_FIELDS}}}}}".replace("$STOP_FIELDS", STOP_FIELDS), json!({"lat":coordinates.latitude,"lon":coordinates.longitude,"radius":radius_m,"first":r.limit}), true),
+            StopSearch::Name(name) if !name.trim().is_empty() => ("query StopSearch($name:String!){stops(name:$name){$STOP_FIELDS}}".replace("$STOP_FIELDS", STOP_FIELDS), json!({"name":name}), false),
+            StopSearch::Name(_) => return Err(contract("StopSearch")),
+            StopSearch::Nearby { coordinates, radius_m } if coordinates.is_valid() && (1..=5_000).contains(&radius_m) => ("query StopNearby($lat:Float!,$lon:Float!,$radius:Int!,$first:Int!){stopsByRadius(lat:$lat lon:$lon radius:$radius first:$first){edges{node{distance stop{$STOP_FIELDS}}}}}".replace("$STOP_FIELDS", STOP_FIELDS), json!({"lat":coordinates.latitude,"lon":coordinates.longitude,"radius":radius_m,"first":r.limit}), true),
+            StopSearch::Nearby { .. } => return Err(contract("StopNearby")),
         };
         let data = self
             .graphql_owned(
@@ -192,6 +194,9 @@ impl<'a> DigitransitRouter<'a> {
         &self,
         r: DepartureRequest,
     ) -> Result<ProviderResult<Option<DepartureBoard>>, ProviderError> {
+        if r.limit == 0 || r.limit > 50 || !(60..=86_400).contains(&r.window_seconds) {
+            return Err(contract("StopDepartures"));
+        }
         let query = "query StopDepartures($id:String!,$count:Int!,$start:Long!,$range:Int!){stop(id:$id){$STOP_FIELDS stoptimesWithoutPatterns(numberOfDepartures:$count startTime:$start timeRange:$range omitCanceled:false omitNonPickups:true){headsign realtime realtimeDeparture realtimeState scheduledDeparture serviceDay trip{gtfsId route{gtfsId shortName longName mode}}}}}".replace("$STOP_FIELDS", STOP_FIELDS);
         let vars = json!({"id":r.stop.as_str(),"count":r.limit,"start":r.at.timestamp(),"range":r.window_seconds});
         let data = self
@@ -204,16 +209,13 @@ impl<'a> DigitransitRouter<'a> {
             });
         };
         let stop = normalize::stop(v, None)?;
-        let mut ds = v
+        let ds = v
             .get("stoptimesWithoutPatterns")
             .and_then(Value::as_array)
             .ok_or_else(|| contract("StopDepartures"))?
             .iter()
             .map(|d| normalize::departure(d, stop.platform.clone()))
             .collect::<Result<Vec<_>, _>>()?;
-        if !r.modes.is_empty() {
-            ds.retain(|d| d.route.mode.is_some_and(|m| r.modes.contains(&m)));
-        }
         Ok(ProviderResult {
             value: Some(DepartureBoard {
                 stop,

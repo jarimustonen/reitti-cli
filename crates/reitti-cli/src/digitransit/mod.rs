@@ -152,10 +152,12 @@ impl<'a> ClientBase<'a> {
                 request_timeout: self.request_timeout,
             })
             .await
-            .map_err(|source| {
-                if source.code == "provider_response_too_large" {
+            .map_err(|source| match source.code {
+                "provider_response_too_large" | "internal_error" => {
                     ProviderError::new(operation, ProviderErrorKind::Contract)
-                } else {
+                }
+                "network_forbidden" => ProviderError::new(operation, ProviderErrorKind::Network),
+                _ => {
                     let mut error = ProviderError::new(operation, ProviderErrorKind::Network);
                     error.retryable = true;
                     error

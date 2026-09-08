@@ -68,6 +68,9 @@ impl<'a> DigitransitGeocoder<'a> {
         &self,
         request: LocationSearchRequest,
     ) -> Result<ProviderResult<Vec<reitti_core::LocationCandidate>>, ProviderError> {
+        if request.limit == 0 || request.limit > 10 || request.query.trim().is_empty() {
+            return Err(contract("LocationSearch"));
+        }
         let mut url = self.operation_url("search")?;
         url.query_pairs_mut()
             .append_pair("text", &request.query)
@@ -77,8 +80,12 @@ impl<'a> DigitransitGeocoder<'a> {
             .base
             .get_json("LocationSearch", url, request.language.code())
             .await?;
+        let candidates = locations(&value)?;
+        if candidates.len() > request.limit as usize {
+            return Err(contract("LocationSearch"));
+        }
         Ok(ProviderResult {
-            value: locations(&value)?,
+            value: candidates,
             source: self.base.source("geocoding-v1", false),
         })
     }
@@ -96,7 +103,11 @@ impl<'a> DigitransitGeocoder<'a> {
             .get_json("LocationPlace", url, language.code())
             .await?;
         let mut values = locations(&value)?;
-        if values.len() > 1 {
+        if values.len() > 1
+            || values
+                .first()
+                .is_some_and(|candidate| candidate.id.as_deref() != Some(id))
+        {
             return Err(contract("LocationPlace"));
         }
         Ok(ProviderResult {
