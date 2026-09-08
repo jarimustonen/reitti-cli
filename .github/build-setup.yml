@@ -1,0 +1,23 @@
+# cargo-dist build setup steps. This file is referenced from dist-workspace.toml.
+- name: Remap build paths in Rust artifacts
+  shell: bash
+  run: |
+    set -euo pipefail
+    encoded="${CARGO_ENCODED_RUSTFLAGS:-}"
+    if [[ -z "$encoded" && -n "${RUSTFLAGS:-}" ]]; then
+      encoded="$(python3 - <<'PY'
+    import os
+    import shlex
+    print("\x1f".join(shlex.split(os.environ["RUSTFLAGS"])), end="")
+    PY
+      )"
+    fi
+    append_flag() {
+      if [[ -n "$encoded" ]]; then
+        encoded+=$'\x1f'
+      fi
+      encoded+="$1"
+    }
+    append_flag "--remap-path-prefix=${HOME}=/build/home"
+    append_flag "--remap-path-prefix=${GITHUB_WORKSPACE}=/build/source"
+    printf 'CARGO_ENCODED_RUSTFLAGS=%s\n' "$encoded" >> "$GITHUB_ENV"

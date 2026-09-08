@@ -29,6 +29,9 @@ jobs:
         run: rustup toolchain install "${{ matrix.toolchain }}" --profile minimal
       - name: Test workspace
         run: cargo +"${{ matrix.toolchain }}" test --locked --workspace
+      - name: Check credential-free Digitransit fixtures
+        if: matrix.toolchain == 'stable'
+        run: python3 scripts/probe-digitransit.py check
       - name: Check formatting and lints
         if: matrix.toolchain == 'stable'
         run: |

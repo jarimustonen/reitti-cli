@@ -1,7 +1,7 @@
 ---
 name: reitti
 description: Resolve HSL-area places and stops, compare public-transport journeys, check departure or arrival plans, and inspect live departures and service alerts with the reitti CLI. Use for travel in Helsinki, Espoo, Vantaa, Kauniainen, Kerava, Kirkkonummi, Sipoo, Siuntio, or Tuusula.
-cli_version: "0.0.0"
+cli_version: "1.0.0"
 schema_version: 1
 ---
 

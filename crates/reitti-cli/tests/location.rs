@@ -2,7 +2,10 @@ use std::{
     collections::{BTreeMap, VecDeque},
     ffi::OsString,
     io::Cursor,
-    sync::{Mutex, MutexGuard},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex, MutexGuard,
+    },
 };
 
 use chrono::{DateTime, Utc};
@@ -60,6 +63,14 @@ impl RequestIdGenerator for FixedIds {
     }
 }
 
+#[derive(Default)]
+struct IncrementingIds(AtomicUsize);
+impl RequestIdGenerator for IncrementingIds {
+    fn next(&self) -> String {
+        format!("req_{}", self.0.fetch_add(1, Ordering::Relaxed) + 1)
+    }
+}
+
 struct EnvGuard {
     old_key: Option<std::ffi::OsString>,
 }
@@ -107,6 +118,49 @@ fn run(transport: &dyn HttpTransport, args: &[&str]) -> (u8, Vec<u8>, Vec<u8>) {
         transport,
     );
     (exit, stdout, stderr)
+}
+
+#[test]
+fn verbose_event_and_result_share_one_generated_request_id() {
+    let (_lock, _guard) = EnvGuard::set();
+    let transport = MockTransport::new(vec![collection(Vec::new())]);
+    let clock = FixedClock::new(
+        DateTime::parse_from_rfc3339("2026-09-08T08:13:39Z")
+            .unwrap()
+            .with_timezone(&Utc),
+    );
+    let ids = IncrementingIds::default();
+    let mut stdin = Cursor::new(Vec::new());
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
+    let exit = run_with_transport(
+        [
+            "reitti",
+            "--json",
+            "--verbose",
+            "--geocoding-url",
+            "https://mock.test/geocoding/v1",
+            "location",
+            "list",
+            "--query",
+            "Kamppi",
+        ]
+        .into_iter()
+        .map(OsString::from)
+        .collect(),
+        &mut stdin,
+        &mut stdout,
+        &mut stderr,
+        &clock,
+        &ids,
+        &transport,
+    );
+    assert_eq!(exit, 0, "{}", String::from_utf8_lossy(&stderr));
+    let event: Value = serde_json::from_slice(&stderr).unwrap();
+    let result: Value = serde_json::from_slice(&stdout).unwrap();
+    assert_eq!(event["request_id"], "req_1");
+    assert_eq!(result["data"]["request"]["request_id"], "req_1");
+    assert_eq!(ids.0.load(Ordering::Relaxed), 1);
 }
 
 #[allow(clippy::too_many_arguments)]

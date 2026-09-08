@@ -20,12 +20,16 @@ pub struct Cli {
     /// Emit diagnostic JSONL on stderr.
     #[arg(long, global = true)]
     pub verbose: bool,
+    /// Override the routing API URL for this invocation (REITTI_ROUTING_URL).
     #[arg(long, global = true, value_name = "HTTPS_URL")]
     pub routing_url: Option<String>,
+    /// Override the geocoding API URL for this invocation (REITTI_GEOCODING_URL).
     #[arg(long, global = true, value_name = "HTTPS_URL")]
     pub geocoding_url: Option<String>,
+    /// Override the connection timeout for this invocation; use ms, s, m, or h (default: 5s).
     #[arg(long, global = true, value_name = "DURATION")]
     pub connect_timeout: Option<String>,
+    /// Override the whole-request timeout for this invocation; use ms, s, m, or h (default: 20s).
     #[arg(long, global = true, value_name = "DURATION")]
     pub request_timeout: Option<String>,
     /// Freeze the injected clock for tests only.
@@ -213,38 +217,47 @@ pub struct ConfigShowArgs {
 
 #[derive(Debug, Args)]
 pub struct ConfigUpdateArgs {
+    /// Persist the default response language.
     #[arg(long, value_enum)]
     pub language: Option<LanguageArg>,
+    /// Persist the IANA timezone used when interpreting provider times.
     #[arg(long, value_name = "IANA_TZ", value_parser = nonblank)]
     pub timezone: Option<String>,
+    /// Persist the routing API URL. Unlike global --routing-url, this changes the config file.
     #[arg(
         id = "set_routing_url",
         long = "set-routing-url",
         value_name = "HTTPS_URL"
     )]
     pub routing_url: Option<String>,
+    /// Persist the geocoding API URL. Unlike global --geocoding-url, this changes the config file.
     #[arg(
         id = "set_geocoding_url",
         long = "set-geocoding-url",
         value_name = "HTTPS_URL"
     )]
     pub geocoding_url: Option<String>,
+    /// Persist the connection timeout; use ms, s, m, or h (default: 5s).
     #[arg(
         id = "set_connect_timeout",
         long = "set-connect-timeout",
         value_name = "DURATION"
     )]
     pub connect_timeout: Option<String>,
+    /// Persist the whole-request timeout; use ms, s, m, or h (default: 20s).
     #[arg(
         id = "set_request_timeout",
         long = "set-request-timeout",
         value_name = "DURATION"
     )]
     pub request_timeout: Option<String>,
+    /// Persist a private marker checked against bundled public text by doctor; repeatable.
     #[arg(long, action = clap::ArgAction::Append, value_parser = nonblank)]
     pub private_marker: Vec<String>,
+    /// Read exactly one Digitransit subscription-key line from stdin and persist it securely.
     #[arg(long)]
     pub subscription_key_stdin: bool,
+    /// Validate and print the planned selective update without writing the config file.
     #[arg(long)]
     pub dry_run: bool,
 }

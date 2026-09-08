@@ -18,9 +18,10 @@ use std::{
 };
 
 use chrono::{DateTime, Utc};
-use clap::{CommandFactory, Parser};
+use clap::{Arg, ArgAction, CommandFactory, Parser};
 use reitti_core::{
-    Clock, FixedClock, LocationRef, RequestIdGenerator, RouteId, StopId, SystemClock,
+    Clock, FixedClock, FixedRequestIds, LocationRef, RequestIdGenerator, RouteId, StopId,
+    SystemClock,
 };
 use serde_json::{json, Value};
 
@@ -134,8 +135,10 @@ pub fn run_with_transport(
         Err(error) => return emit_error(&error, json, stderr),
     };
     let clock: &dyn Clock = clock_override.as_deref().unwrap_or(system_clock);
+    let invocation_request_id = request_ids.next();
+    let invocation_request_ids = FixedRequestIds::new(invocation_request_id.clone());
     if cli.verbose {
-        let event = json!({"timestamp": clock.now().to_rfc3339(), "level":"INFO", "event":"invocation_started", "component":"cli", "request_id": request_ids.next(), "message":"reitti invocation started"});
+        let event = json!({"timestamp": clock.now().to_rfc3339(), "level":"INFO", "event":"invocation_started", "component":"cli", "request_id": invocation_request_id, "message":"reitti invocation started"});
         if writeln!(
             stderr,
             "{}",
@@ -146,7 +149,7 @@ pub fn run_with_transport(
             return 2;
         }
     }
-    let result = execute(cli, stdin, clock, request_ids, transport);
+    let result = execute(cli, stdin, clock, &invocation_request_ids, transport);
     finish(result, json, prepared, stdout, stderr)
 }
 
@@ -690,13 +693,23 @@ fn execute_help(
         .map_err(|error| AppError::caller("usage_error", one_line(&error.to_string())))?;
     let output_path = matches.get_one::<std::path::PathBuf>("output").cloned();
     let path = match_path(&matches);
-    let mut command = Cli::command();
+    let mut command = Cli::command().arg(
+        Arg::new("version_alias")
+            .long("version")
+            .help("Show version and build provenance (alias of `reitti version`).")
+            .action(ArgAction::SetTrue),
+    );
     let global_flags = command
         .get_arguments()
         .filter(|arg| arg.is_global_set())
         .cloned()
         .collect::<Vec<_>>();
     let target = find_command(&mut command, &path)?;
+    target.set_bin_name(if path.is_empty() {
+        "reitti".to_owned()
+    } else {
+        format!("reitti {}", path.join(" "))
+    });
     if json {
         let mut flags = target
             .get_arguments()
@@ -799,6 +812,7 @@ fn help_flag(arg: &clap::Arg) -> Value {
         "value_name": arg.get_value_names().and_then(|names| names.first()).map(|name| name.to_string()),
         "possible_values": arg.get_possible_values().iter().map(|value| value.get_name()).collect::<Vec<_>>(),
         "default": arg.get_default_values().first().map(|value| value.to_string_lossy()),
+        "description": arg.get_long_help().or_else(|| arg.get_help()).map(|help| help.to_string()).unwrap_or_default(),
         "env": env_for(arg.get_long()),
         "global": arg.is_global_set(),
         "hidden": arg.is_hide_set(),

@@ -63,7 +63,7 @@ fn equivalent_version_spellings_are_byte_identical() {
             )),
         }
         assert_eq!(value["data"]["skills"][0]["name"], "reitti");
-        assert_eq!(value["data"]["skills"][0]["cli_version"], "0.0.0");
+        assert_eq!(value["data"]["skills"][0]["cli_version"], "1.0.0");
         assert_eq!(value["data"]["skills"][0]["schema_version"], 1);
     }
     for output in &outputs[1..] {
@@ -106,7 +106,7 @@ fn support_commands_have_stable_text_surfaces() {
     let alias = run(home.path(), &["--version"]);
     assert!(version.status.success());
     assert_eq!(version.stdout, alias.stdout);
-    assert!(String::from_utf8_lossy(&version.stdout).starts_with("reitti 0.0.0 ("));
+    assert!(String::from_utf8_lossy(&version.stdout).starts_with("reitti 1.0.0 ("));
 
     let path = run(home.path(), &["config", "path"]);
     assert!(path.status.success());
@@ -173,6 +173,14 @@ fn structured_help_uses_validated_path_and_exposes_hidden_test_clock() {
     let config_help = run(home.path(), &["config", "update", "--help", "--json"]);
     assert!(config_help.status.success());
     let config_help: Value = serde_json::from_slice(&config_help.stdout).unwrap();
+    assert!(config_help["data"]["usage"]
+        .as_str()
+        .unwrap()
+        .contains("reitti config update"));
+    let config_flags = config_help["data"]["flags"].as_array().unwrap();
+    assert!(config_flags.iter().all(|flag| flag["description"]
+        .as_str()
+        .is_some_and(|description| !description.is_empty())));
     let names = config_help["data"]["flags"]
         .as_array()
         .unwrap()
@@ -193,11 +201,24 @@ fn structured_help_uses_validated_path_and_exposes_hidden_test_clock() {
         .iter()
         .any(|part| part == "--dry-run"));
 
+    let root_help = run(home.path(), &["--help"]);
+    assert!(root_help.status.success());
+    assert!(String::from_utf8_lossy(&root_help.stdout).contains("--version"));
+
+    let text_config_help = run(home.path(), &["config", "update", "--help"]);
+    assert!(text_config_help.status.success());
+    let text_config_help = String::from_utf8(text_config_help.stdout).unwrap();
+    assert!(text_config_help.contains("Usage: reitti config update"));
+    assert!(text_config_help.contains("Read exactly one Digitransit subscription-key line"));
+
     let text_help = run(home.path(), &["departure", "list", "--help"]);
     assert!(text_help.status.success());
     let text_help = String::from_utf8(text_help.stdout).unwrap();
     assert!(text_help.contains("Example:"));
     assert!(text_help.contains("reitti --json departure list --stop HSL:1020453"));
+    assert!(!text_help.contains("--version"));
+    let nested_version = run(home.path(), &["journey", "list", "--version"]);
+    assert_eq!(nested_version.status.code(), Some(1));
 
     let help_file = home.path().join("help.json");
     let file_output = run(
