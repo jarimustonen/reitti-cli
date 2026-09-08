@@ -29,3 +29,8 @@ Produce a reproducible and documented first release after all user-facing capabi
 ### 2026-09-08T08:04:12Z · @codex
 
 Primary review of landed OSS foundations: final integration must remove stale placeholder/private-development wording. SECURITY.md currently says enable GitHub PVR before visibility change although the private-repo endpoint returns 404; verify actual platform sequencing and describe it correctly, without pretending it is enabled. Do not invent or mandate a separate conduct email as an additional release blocker: GitHub reporting/moderation and the documented existing maintainer channels are a proportionate policy unless the maintainer chooses another contact. No public crates.io release is intended. Verify three cargo-dist targets, shell installer, checksums/provenance and source install; keep GitHub private.
+
+### 2026-09-08T08:19:55Z · @codex
+
+Release preflight evidence: GitHub documents that artifact attestations in private/internal repositories require Enterprise Cloud (https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations). This target is currently private and User-owned; the available account API did not expose a plan, so capability is not verified. Check the actual private-repository build/sign path before promising keyless provenance or preserving an assumed blocker. Keep requested repository privacy. Do not silently claim unproduced attestations; prefer an honest, reviewed private-release path with verifiable checksums/build commit evidence and public-release-ready automation, documenting any platform limitation precisely.
+
