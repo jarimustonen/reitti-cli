@@ -87,7 +87,10 @@ pub fn run_with_transport(
     request_ids: &dyn RequestIdGenerator,
     transport: &dyn client::HttpTransport,
 ) -> u8 {
-    let args = normalize_version_alias(args);
+    let mut args = normalize_version_alias(args);
+    if args.len() == 1 {
+        args.push(OsString::from("--help"));
+    }
     let json_requested = semantic_flag(&args, "--json");
 
     if semantic_flag(&args, "--help") {

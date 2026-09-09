@@ -205,6 +205,11 @@ fn structured_help_uses_validated_path_and_exposes_hidden_test_clock() {
     assert!(root_help.status.success());
     assert!(String::from_utf8_lossy(&root_help.stdout).contains("--version"));
 
+    let bare = run(home.path(), &[]);
+    assert!(bare.status.success());
+    assert_eq!(bare.stdout, root_help.stdout);
+    assert!(bare.stderr.is_empty());
+
     let text_config_help = run(home.path(), &["config", "update", "--help"]);
     assert!(text_config_help.status.success());
     let text_config_help = String::from_utf8(text_config_help.stdout).unwrap();
