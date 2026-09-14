@@ -1,10 +1,12 @@
 ---
 created: 2026-09-09
-updated: 2026-09-09
+updated: 2026-09-14
 type: feature
 reporter: jarimustonen
 status: open
 priority: normal
+lane: cli-surface
+lane_seq: 10
 ---
 
 # Add stop details and Reittiopas links
@@ -39,3 +41,9 @@ The implementation must verify the current official URL and API contracts before
 ## Approval
 
 The proposed implementation sequence and contract decisions are in `plan.md`. Do not lane or implement this issue until the maintainer approves that plan.
+
+## Decisions
+
+### 2026-09-14T13:07:55Z · @jarimustonen
+
+Approved the proposed plan and its four public-surface decisions. Lane the issue for implementation.

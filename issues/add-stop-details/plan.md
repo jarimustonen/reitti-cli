@@ -1,6 +1,6 @@
 # Plan: stop details and Reittiopas links
 
-**Status:** Proposed for maintainer approval. Keep the issue unlaned until approved.
+**Status:** Approved by the maintainer on 2026-09-14 and scheduled in the `cli-surface` lane.
 
 ## Product decision
 
