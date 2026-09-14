@@ -3,10 +3,12 @@ created: 2026-09-09
 updated: 2026-09-14
 type: feature
 reporter: jarimustonen
-status: in-progress
+status: done
 priority: normal
 lane: cli-surface
 lane_seq: 10
+closed: 2026-09-14
+closed_by: codex
 ---
 
 # Add stop details and Reittiopas links
