@@ -151,6 +151,7 @@ fn sorted_modes(mut modes: Vec<Mode>) -> Vec<Mode> {
 
 pub fn stop(value: &Value, distance: Option<f64>) -> Result<Stop, ProviderError> {
     let id = req_str(value, "gtfsId", "stop")?;
+    let validated_id = id.parse::<StopId>().map_err(|_| contract("stop"))?;
     let name = req_str(value, "name", "stop")?;
     let coordinates = coords_optional(value.get("lat"), value.get("lon"), "stop")?;
     let modes = match value
@@ -173,6 +174,28 @@ pub fn stop(value: &Value, distance: Option<f64>) -> Result<Stop, ProviderError>
         modes,
         wheelchair_boarding,
         service_area: ServiceArea::Inside,
+        reittiopas_url: validated_id.reittiopas_url(),
+    })
+}
+
+pub fn stop_detail(value: &Value) -> Result<StopDetail, ProviderError> {
+    let stop = stop(value, None)?;
+    let parent_station = value
+        .get("parentStation")
+        .filter(|value| !value.is_null())
+        .map(|parent| {
+            let id = req_str(parent, "gtfsId", "stop")?;
+            id.parse::<StopId>().map_err(|_| contract("stop"))?;
+            Ok(ParentStation {
+                id,
+                name: req_str(parent, "name", "stop")?,
+            })
+        })
+        .transpose()?;
+    Ok(StopDetail {
+        stop,
+        zone: opt_str(value, "zoneId")?,
+        parent_station,
     })
 }
 fn place(value: &Value) -> Result<Place, ProviderError> {

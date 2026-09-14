@@ -46,6 +46,7 @@ One CLI invocation performs at most the following provider requests:
 |---|---:|---|
 | `location list` | 1 | one geocoding search |
 | `stop list` | 1 | one bounded Routing v2 stop query |
+| `stop show` | 1 | one bounded Routing v2 `StopDetail` query |
 | `journey list` | 3 | at most one lookup for each `query:`/`place:`/`stop:` endpoint, then one plan query; `coord:` adds no lookup |
 | `departure list` | 1 | one bounded Routing v2 stop query |
 | `alert list` | 1 | one Routing v2 alert query, filtered and capped locally if needed |
@@ -78,6 +79,7 @@ reitti [GLOBAL] journey list --from <LOCATION_REF> --to <LOCATION_REF>
        [--include-geometry] [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] stop list [--query <QUERY> | --near <COORDINATES>]
        [--radius-m <M>] [--language <LANG>] [--limit <N>]
+reitti [GLOBAL] stop show <STOP_ID> [--language <LANG>]
 reitti [GLOBAL] departure list --stop <STOP_ID> [--at <RFC3339>]
        [--window <DURATION>] [--mode <MODE>]... [--language <LANG>] [--limit <N>]
 reitti [GLOBAL] alert list [--route <ROUTE_ID>]... [--stop <STOP_ID>]...
@@ -166,9 +168,10 @@ coord:<LAT,LON>                          coord:60.1699,24.9384
 Within polymorphic journey endpoints, a stop uses `stop:<GTFS id>` and a bare
 ID, bare coordinate, or bare place name is rejected with
 `invalid_location_ref`; explicit tagging prevents an agent from accidentally
-changing interpretation. Stop-specific positions instead accept a canonical
-raw `STOP_ID`, for example `HSL:1020453`, because the argument type is already
-unambiguous. A prefixed `stop:HSL:…` there is rejected with `invalid_stop_id`.
+changing interpretation. Stop-specific positions, including `stop show`,
+instead accept a canonical raw `STOP_ID`, for example `HSL:1020453`, because
+the argument type is already unambiguous. A prefixed `stop:HSL:…` there is
+rejected with `invalid_stop_id`.
 
 `location list` returns `candidate.ref` values byte-for-byte suitable for
 `journey list`. A `query:` endpoint in `journey list` performs a bounded search:
@@ -596,7 +599,7 @@ HSL:1000102  Kamppi            subway 470 m  stop:HSL:1000102
     "search": {"kind": "near", "query": null, "coordinates": {"latitude": 60.1699, "longitude": 24.9384}, "radius_m": 500, "limit": 2},
     "count": 2,
     "complete": false,
-    "stops": [{"ref": "stop:HSL:1020453", "id": "HSL:1020453", "name": "Päärautatieasema", "code": null, "coordinates": {"latitude": 60.1702, "longitude": 24.9391}, "distance_m": 310, "modes": ["tram"], "wheelchair_boarding": "unknown", "service_area": "inside"}],
+    "stops": [{"ref": "stop:HSL:1020453", "id": "HSL:1020453", "name": "Päärautatieasema", "code": null, "platform": null, "coordinates": {"latitude": 60.1702, "longitude": 24.9391}, "distance_m": 310, "modes": ["tram"], "wheelchair_boarding": "unknown", "service_area": "inside", "reittiopas_url": "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"}],
     "request": {"request_id": "req_01J00000000000000000000000", "language": "en", "timezone": "Europe/Helsinki"},
     "source": {"provider": "digitransit", "dataset": "hsl", "product": "routing-v2-hsl-gtfs", "retrieved_at": "2026-09-08T06:56:40Z", "attribution": "© Digitransit; retrieved 2026-09-08T06:56:40Z", "licenses": ["CC-BY-4.0", "ODbL-1.0"], "realtime_included": true}
   },
@@ -608,6 +611,36 @@ For named search, `search.kind` is `query`, `query` is non-null, coordinates and
 radius are null. `wheelchair_boarding` is
 `accessible|not_accessible|unknown`; source unknown never becomes accessible.
 No matches is successful with `stops: []`.
+
+Every shared stop object also carries `reittiopas_url`, constructed locally
+from its strictly validated raw HSL ID. This is a human-facing HSL route-planner
+link, not a machine-authoritative source or a reason for another request.
+
+### `stop show`
+
+`stop show <STOP_ID>` performs exactly one bounded Routing v2 `StopDetail`
+request. Tagged, blank, malformed, and missing IDs fail before provider or
+output-file I/O. Only `zoneId` and the parent station's ID/name extend the
+shared compact stop fields; unbounded `patterns` and station child lists are
+not requested. Unknown stop is `stop_not_found` exit 1. Provider contract
+failures remain exit 2.
+
+```json
+{
+  "schema_version": 1,
+  "data": {
+    "stop": {"ref": "stop:HSL:1174504", "id": "HSL:1174504", "name": "Pasila", "code": "H0090", "platform": "8", "coordinates": {"latitude": 60.199, "longitude": 24.932}, "distance_m": null, "modes": ["rail"], "wheelchair_boarding": "unknown", "service_area": "inside", "reittiopas_url": "https://reittiopas.hsl.fi/pysakit/HSL%3A1174504", "zone": "A", "parent_station": {"id": "HSL:1000202", "name": "Pasilan asema"}},
+    "request": {"request_id": "req_01J00000000000000000000000", "language": "en", "timezone": "Europe/Helsinki"},
+    "source": {"provider": "digitransit", "dataset": "hsl", "product": "routing-v2-hsl-gtfs", "retrieved_at": "2026-09-14T14:00:00Z", "attribution": "© Digitransit; retrieved 2026-09-14T14:00:00Z", "licenses": ["CC-BY-4.0", "ODbL-1.0"], "realtime_included": true}
+  },
+  "warnings": []
+}
+```
+
+`zone` and `parent_station` are nullable and remain `null` when absent. Unknown
+provider mode/accessibility values retain the shared empty/`unknown` semantics.
+The verified Reittiopas route and its web-UI stability boundary are recorded in
+@add-stop-details validation.
 
 ### `departure list`
 
@@ -629,7 +662,7 @@ Päärautatieasema · next 3 departures from 09:55 EEST
 {
   "schema_version": 1,
   "data": {
-    "stop": {"ref": "stop:HSL:1020453", "id": "HSL:1020453", "name": "Päärautatieasema", "code": null, "coordinates": null, "modes": ["tram"], "wheelchair_boarding": "unknown", "service_area": "inside"},
+    "stop": {"ref": "stop:HSL:1020453", "id": "HSL:1020453", "name": "Päärautatieasema", "code": null, "platform": null, "coordinates": null, "distance_m": null, "modes": ["tram"], "wheelchair_boarding": "unknown", "service_area": "inside", "reittiopas_url": "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"},
     "at": "2026-09-08T09:55:00+03:00",
     "time_source": "argument",
     "window_seconds": 7200,
@@ -797,6 +830,7 @@ value. Config path/show/version/schema/skill work without credentials.
 location-list
 journey-list
 stop-list
+stop-show
 departure-list
 alert-list
 config-path
@@ -874,6 +908,7 @@ copy-pasteable example. Required examples for the command paths are:
 location list: reitti --json location list --query Kamppi --kind stop --limit 5
 journey list: reitti --json journey list --from place:… --to stop:HSL:1020453 --arrive-by 2026-09-08T10:00:00+03:00
 stop list: reitti --json stop list --near 60.1699,24.9384 --radius-m 500 --limit 5
+stop show: reitti --json stop show HSL:1020453 --language fi
 departure list: reitti --json departure list --stop HSL:1020453 --at 2026-09-08T09:55:00+03:00 --limit 10
 alert list: reitti --json alert list --route HSL:31M1 --stop HSL:1020453 --active-at 2026-09-08T09:00:00+03:00
 config path: reitti --json config path
@@ -980,17 +1015,18 @@ empty illustrative object above.
 ### Companion skill
 
 Exactly one bundled Agent Skill is named `reitti`. Its trigger description says
-it is for HSL-area place resolution, journey comparison, arrivals/departures,
-and alerts. It teaches this safe workflow:
+it is for HSL-area place and stop resolution, journey comparison,
+arrivals/departures, and alerts. It teaches this safe workflow:
 
 1. inspect `version --json` and run `doctor --json` after unexplained failures;
 2. search and show candidates to the user when the endpoint is ambiguous;
-3. retry with returned tagged references;
-4. pass explicit RFC-3339 times for reproducible plans;
-5. compare all returned alternatives using source facts and deterministic labels;
-6. describe realtime as updated/scheduled/unknown, never as confidence;
-7. state when fare/accessibility/availability is null or unknown;
-8. preserve Digitransit attribution in downstream summaries.
+3. inspect one known stop with raw-ID `stop show` and treat its Reittiopas URL as human follow-up only;
+4. retry with returned tagged references;
+5. pass explicit RFC-3339 times for reproducible plans;
+6. compare all returned alternatives using source facts and deterministic labels;
+7. describe realtime as updated/scheduled/unknown, never as confidence;
+8. state when fare/accessibility/availability is null or unknown;
+9. preserve Digitransit attribution in downstream summaries.
 
 `skill list --json` declares `supported_agents: ["claude","pi","codex"]` and:
 

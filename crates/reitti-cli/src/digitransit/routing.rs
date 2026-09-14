@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 use std::time::Duration;
 
 const STOP_FIELDS: &str = "gtfsId name code platformCode lat lon vehicleMode wheelchairBoarding";
+const STOP_DETAIL_FIELDS: &str = "gtfsId name code platformCode lat lon vehicleMode wheelchairBoarding zoneId parentStation { gtfsId name }";
 const ALERT_FIELDS: &str = r#"id feed alertHeaderText alertDescriptionText alertSeverityLevel alertEffect effectiveStartDate effectiveEndDate entities { __typename ... on Agency { gtfsId } ... on Pattern { route { gtfsId } } ... on Route { gtfsId } ... on Stop { gtfsId } ... on StopOnRoute { route { gtfsId } stop { gtfsId } } ... on StopOnTrip { trip { gtfsId } stop { gtfsId } } ... on Trip { gtfsId } }"#;
 const PLAN_QUERY: &str = r#"query NavigationPlan($origin:PlanLabeledLocationInput!,$destination:PlanLabeledLocationInput!,$dateTime:PlanDateTimeInput!,$modes:PlanModesInput!,$preferences:PlanPreferencesInput!,$geometry:Boolean!,$first:Int!){planConnection(origin:$origin destination:$destination dateTime:$dateTime modes:$modes preferences:$preferences first:$first){routingErrors{code description inputField}pageInfo{hasNextPage endCursor}searchDateTime edges{node{start end duration numberOfTransfers waitingTime walkTime walkDistance legs{mode duration distance realTime realtimeState interlineWithPreviousLeg headsign trip{gtfsId}route{gtfsId shortName longName mode}from{name lat lon stop{gtfsId name code platformCode lat lon vehicleMode wheelchairBoarding}}to{name lat lon stop{gtfsId name code platformCode lat lon vehicleMode wheelchairBoarding}}start{scheduledTime estimated{time delay}}end{scheduledTime estimated{time delay}}stopCalls{stopLocation{__typename ... on Stop{gtfsId name code platformCode lat lon vehicleMode wheelchairBoarding}}}steps{distance streetName relativeDirection absoluteDirection lat lon bogusName area stayOn exit}legGeometry @include(if:$geometry){length points}alerts{id feed alertHeaderText alertDescriptionText alertSeverityLevel alertEffect effectiveStartDate effectiveEndDate entities{__typename ... on Agency{gtfsId}... on Pattern{route{gtfsId}}... on Route{gtfsId}... on Stop{gtfsId}... on StopOnRoute{route{gtfsId}stop{gtfsId}}... on StopOnTrip{trip{gtfsId}stop{gtfsId}}... on Trip{gtfsId}}}}}}}}"#;
 
@@ -87,16 +88,18 @@ impl<'a> DigitransitRouter<'a> {
         &self,
         id: &StopId,
         lang: Language,
-    ) -> Result<ProviderResult<Option<Stop>>, ProviderError> {
-        let query = "query StopDetail($id:String!){stop(id:$id){$STOP_FIELDS}}"
-            .replace("$STOP_FIELDS", STOP_FIELDS);
+    ) -> Result<ProviderResult<Option<StopDetail>>, ProviderError> {
+        let query = "query StopDetail($id:String!){stop(id:$id){$STOP_DETAIL_FIELDS}}"
+            .replace("$STOP_DETAIL_FIELDS", STOP_DETAIL_FIELDS);
         let data = self
             .graphql_owned("StopDetail", query, json!({"id":id.as_str()}), lang)
             .await?;
-        let value = data
-            .get("stop")
-            .filter(|v| !v.is_null())
-            .map(|v| normalize::stop(v, None))
+        let stop = data
+            .as_object()
+            .and_then(|object| object.get("stop"))
+            .ok_or_else(|| contract("StopDetail"))?;
+        let value = (!stop.is_null())
+            .then(|| normalize::stop_detail(stop))
             .transpose()?;
         Ok(ProviderResult {
             value,
@@ -255,7 +258,11 @@ impl Router for DigitransitRouter<'_> {
     fn search_stops(&self, r: StopSearchRequest) -> ProviderFuture<'_, ProviderResult<Vec<Stop>>> {
         Box::pin(self.search_impl(r))
     }
-    fn stop(&self, id: &StopId, l: Language) -> ProviderFuture<'_, ProviderResult<Option<Stop>>> {
+    fn stop(
+        &self,
+        id: &StopId,
+        l: Language,
+    ) -> ProviderFuture<'_, ProviderResult<Option<StopDetail>>> {
         let id = id.clone();
         Box::pin(async move { self.stop_impl(&id, l).await })
     }

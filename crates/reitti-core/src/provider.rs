@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::{
     Alert, Coordinates, DepartureBoard, Language, LocationCandidate, Mode, PlanResult,
-    ProviderResult, Stop, StopId,
+    ProviderResult, Stop, StopDetail, StopId,
 };
 
 pub type ProviderFuture<'a, T> =
@@ -133,7 +133,7 @@ pub trait Router: Send + Sync {
         &self,
         id: &StopId,
         language: Language,
-    ) -> ProviderFuture<'_, ProviderResult<Option<Stop>>>;
+    ) -> ProviderFuture<'_, ProviderResult<Option<StopDetail>>>;
     fn departures(
         &self,
         request: DepartureRequest,

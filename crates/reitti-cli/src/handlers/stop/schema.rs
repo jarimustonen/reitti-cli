@@ -14,7 +14,7 @@ fn coordinates() -> Value {
 fn stop() -> Value {
     json!({
         "type":"object", "additionalProperties":false,
-        "required":["ref","id","name","code","platform","coordinates","distance_m","modes","wheelchair_boarding","service_area"],
+        "required":["ref","id","name","code","platform","coordinates","distance_m","modes","wheelchair_boarding","service_area","reittiopas_url"],
         "properties":{
             "ref":{"type":"string","pattern":"^stop:HSL:[A-Za-z0-9_.-]+$"},
             "id":{"type":"string","pattern":"^HSL:[A-Za-z0-9_.-]+$"},
@@ -25,7 +25,8 @@ fn stop() -> Value {
             "distance_m":{"type":["number","null"],"minimum":0},
             "modes":{"type":"array","uniqueItems":true,"items":{"enum":["bus","tram","rail","subway","ferry"]}},
             "wheelchair_boarding":{"enum":["accessible","not_accessible","unknown"]},
-            "service_area":{"enum":["inside","outside","unknown"]}
+            "service_area":{"enum":["inside","outside","unknown"]},
+            "reittiopas_url":{"type":"string","pattern":"^https://reittiopas\\.hsl\\.fi/pysakit/HSL%3A[A-Za-z0-9_.-]+$"}
         }
     })
 }
@@ -101,6 +102,47 @@ fn alert() -> Value {
             "valid_until":{"type":["string","null"],"format":"date-time"},
             "entities":{"type":"array","items":alert_entity()},
             "source_feed":{"type":["string","null"]}
+        }
+    })
+}
+
+pub fn stop_detail_schema() -> Value {
+    let mut detailed_stop = stop();
+    let object = detailed_stop
+        .as_object_mut()
+        .expect("stop schema is an object");
+    object
+        .get_mut("required")
+        .and_then(Value::as_array_mut)
+        .expect("stop required is an array")
+        .extend([json!("zone"), json!("parent_station")]);
+    object
+        .get_mut("properties")
+        .and_then(Value::as_object_mut)
+        .expect("stop properties is an object")
+        .extend([
+            ("zone".to_owned(), json!({"type":["string","null"]})),
+            (
+                "parent_station".to_owned(),
+                json!({
+                    "type":["object","null"],
+                    "additionalProperties":false,
+                    "required":["id","name"],
+                    "properties":{
+                        "id":{"type":"string","pattern":"^HSL:[A-Za-z0-9_.-]+$"},
+                        "name":{"type":"string","minLength":1}
+                    }
+                }),
+            ),
+        ]);
+    json!({
+        "$schema":"https://json-schema.org/draft/2020-12/schema",
+        "type":"object", "additionalProperties":false,
+        "required":["stop","request","source"],
+        "properties":{
+            "stop":detailed_stop,
+            "request":request(),
+            "source":source()
         }
     })
 }

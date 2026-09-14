@@ -64,6 +64,12 @@ fn fixture(name: &str) -> Value {
         "routing-departures.json" => {
             include_str!("../../../../tests/fixtures/digitransit/routing-departures.json")
         }
+        "routing-stop-detail.json" => {
+            include_str!("../../../../tests/fixtures/digitransit/routing-stop-detail.json")
+        }
+        "routing-stop-detail-platform.json" => {
+            include_str!("../../../../tests/fixtures/digitransit/routing-stop-detail-platform.json")
+        }
         "routing-alert-scopes.json" => {
             include_str!("../../../../tests/fixtures/digitransit/routing-alert-scopes.json")
         }
@@ -214,6 +220,53 @@ async fn rich_plan_uses_typed_variables_and_preserves_navigation() {
         .unwrap()
         .contains("intermediateStops"));
     assert!(body.get("maxWalkDistance").is_none());
+}
+
+#[tokio::test]
+async fn stop_detail_is_one_bounded_request_with_exact_variables() {
+    let fixture = fixture("routing-stop-detail.json");
+    let transport = MockTransport::new(vec![response(200, fixture["response"]["body"].clone())]);
+    let clock = clock();
+    let id: StopId = "HSL:1020453".parse().unwrap();
+    let result = router(&transport, &clock)
+        .stop(&id, Language::Fi)
+        .await
+        .unwrap();
+    let detail = result.value.unwrap();
+    assert_eq!(detail.zone.as_deref(), Some("A"));
+    assert_eq!(detail.parent_station, None);
+    assert_eq!(
+        detail.stop.reittiopas_url,
+        "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"
+    );
+
+    let requests = transport.requests();
+    assert_eq!(requests.len(), 1);
+    let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert_eq!(body["operationName"], "StopDetail");
+    assert_eq!(body["variables"], json!({"id":"HSL:1020453"}));
+    let query = body["query"].as_str().unwrap();
+    assert!(query.contains("zoneId parentStation { gtfsId name }"));
+    assert!(!query.contains("patterns"));
+    assert!(!query.contains("routes"));
+}
+
+#[test]
+fn platform_detail_preserves_nulls_parent_and_unknown_enums() {
+    let fixture = fixture("routing-stop-detail-platform.json");
+    let detail = normalize::stop_detail(&fixture["response"]["body"]["data"]["stop"]).unwrap();
+    assert_eq!(detail.zone, None);
+    assert_eq!(detail.stop.code, None);
+    assert_eq!(detail.stop.coordinates, None);
+    assert!(detail.stop.modes.is_empty());
+    assert_eq!(detail.stop.wheelchair_boarding, WheelchairBoarding::Unknown);
+    assert_eq!(
+        detail.parent_station,
+        Some(ParentStation {
+            id: "HSL:1000202".into(),
+            name: "Pasilan asema".into()
+        })
+    );
 }
 
 #[test]

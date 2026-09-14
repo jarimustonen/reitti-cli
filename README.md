@@ -85,12 +85,15 @@ reitti --json schema show journey-list
 
 Use `--json` for schema-versioned output. Times must be RFC 3339 with `Z` or an explicit offset; coordinates use `LAT,LON` without whitespace.
 
-Find candidates before choosing an ambiguous place:
+Find candidates before choosing an ambiguous place, or inspect one known stop:
 
 ```sh
 reitti --json location list --query "Kamppi" --kind stop --limit 5
 reitti --json stop list --near 60.1699,24.9384 --radius-m 500 --limit 5
+reitti --json stop show HSL:1020453
 ```
+
+`stop show` takes a raw `HSL:` stop ID and returns bounded Digitransit facts plus an explicit `reittiopas_url` for human follow-up. The linked web page is not an additional machine-authoritative source.
 
 Plan from coordinates at the current time:
 

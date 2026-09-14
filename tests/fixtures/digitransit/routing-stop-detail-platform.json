@@ -1,0 +1,27 @@
+{
+  "case": "station platform detail",
+  "fixture_schema_version": 1,
+  "response": {
+    "body": {
+      "data": {
+        "stop": {
+          "gtfsId": "HSL:1174504",
+          "name": "Pasila",
+          "code": null,
+          "platformCode": "8",
+          "lat": null,
+          "lon": null,
+          "vehicleMode": "FUTURE_MODE",
+          "wheelchairBoarding": "FUTURE_VALUE",
+          "zoneId": null,
+          "parentStation": {
+            "gtfsId": "HSL:1000202",
+            "name": "Pasilan asema"
+          }
+        }
+      }
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-14T14:00:00Z"
+}

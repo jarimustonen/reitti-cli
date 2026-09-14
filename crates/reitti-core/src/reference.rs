@@ -59,6 +59,16 @@ impl StopId {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    /// Build the official HSL Reittiopas stop-page route from a validated ID.
+    /// The strict suffix alphabet is URI-unreserved, so only the feed separator
+    /// needs encoding and no input can alter the host or path structure.
+    pub fn reittiopas_url(&self) -> String {
+        format!(
+            "https://reittiopas.hsl.fi/pysakit/HSL%3A{}",
+            self.0.strip_prefix("HSL:").expect("validated HSL prefix")
+        )
+    }
 }
 
 impl fmt::Display for StopId {
@@ -176,6 +186,23 @@ mod tests {
         assert!("HSL:1020453".parse::<StopId>().is_ok());
         assert!("stop:HSL:1020453".parse::<StopId>().is_err());
         assert!("HSL:".parse::<StopId>().is_err());
+    }
+
+    #[test]
+    fn reittiopas_url_is_fixed_to_the_hsl_stop_route() {
+        let id: StopId = "HSL:1020453".parse().unwrap();
+        assert_eq!(
+            id.reittiopas_url(),
+            "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"
+        );
+        for unsafe_id in [
+            "HSL:123/../../evil",
+            "HSL:123?next=https://evil.test",
+            "HSL:123%2Fescape",
+            "https://evil.test",
+        ] {
+            assert!(unsafe_id.parse::<StopId>().is_err());
+        }
     }
 
     #[test]

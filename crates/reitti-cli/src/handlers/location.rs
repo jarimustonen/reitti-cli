@@ -193,7 +193,7 @@ pub(crate) fn resolve(
                 )
                 .with_detail("source", json!(&source))
             })?;
-            let candidate = stop_candidate(stop, input_ref)
+            let candidate = stop_candidate(stop.stop, input_ref)
                 .map_err(|error| error.with_detail("source", json!(&source)))?;
             reject_outside(input_ref, &candidate)
                 .map_err(|error| error.with_detail("source", json!(&source)))?;

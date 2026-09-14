@@ -161,6 +161,33 @@ fn structured_help_uses_validated_path_and_exposes_hidden_test_clock() {
         .iter()
         .any(|flag| flag["name"] == "--frozen-time" && flag["hidden"] == true));
 
+    let stop_help = run(home.path(), &["stop", "show", "--help", "--json"]);
+    assert!(stop_help.status.success());
+    let stop_help: Value = serde_json::from_slice(&stop_help.stdout).unwrap();
+    assert_eq!(
+        stop_help["data"]["path"],
+        serde_json::json!(["stop", "show"])
+    );
+    assert_eq!(stop_help["data"]["args"][0]["name"], "stop_id");
+    assert_eq!(stop_help["data"]["args"][0]["required"], true);
+    assert_eq!(
+        stop_help["data"]["examples"][0]["argv"],
+        serde_json::json!([
+            "reitti",
+            "--json",
+            "stop",
+            "show",
+            "HSL:1020453",
+            "--language",
+            "fi"
+        ])
+    );
+    let stop_text_help = run(home.path(), &["stop", "show", "--help"]);
+    assert!(stop_text_help.status.success());
+    let stop_text_help = String::from_utf8(stop_text_help.stdout).unwrap();
+    assert!(stop_text_help.contains("STOP_ID"));
+    assert!(stop_text_help.contains("reitti --json stop show HSL:1020453"));
+
     let schema_help = run(home.path(), &["schema", "show", "--help", "--json"]);
     assert!(schema_help.status.success());
     let schema_help: Value = serde_json::from_slice(&schema_help.stdout).unwrap();

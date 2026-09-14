@@ -99,6 +99,21 @@ pub struct Stop {
     pub modes: Vec<Mode>,
     pub wheelchair_boarding: WheelchairBoarding,
     pub service_area: ServiceArea,
+    pub reittiopas_url: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ParentStation {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StopDetail {
+    #[serde(flatten)]
+    pub stop: Stop,
+    pub zone: Option<String>,
+    pub parent_station: Option<ParentStation>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

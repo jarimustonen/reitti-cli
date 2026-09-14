@@ -1,7 +1,7 @@
 mod schema;
 use super::{await_provider, HandlerContext};
 use crate::{
-    command::{self, DepartureListArgs, ModeArg, StopListArgs},
+    command::{self, DepartureListArgs, ModeArg, StopListArgs, StopShowArgs},
     config,
     digitransit::DigitransitRouter,
     error::AppError,
@@ -9,10 +9,47 @@ use crate::{
 };
 use chrono::{DateTime, FixedOffset};
 use reitti_core::{
-    Departure, DepartureRequest, Language, LocationRef, Mode, Router, StopSearch, StopSearchRequest,
+    Departure, DepartureRequest, Language, LocationRef, Mode, Router, StopDetail, StopId,
+    StopSearch, StopSearchRequest,
 };
 use serde_json::{json, Value};
 use std::time::Duration;
+
+pub fn execute_show(
+    context: HandlerContext<'_>,
+    args: StopShowArgs,
+    language: Language,
+) -> Result<CommandOutput, AppError> {
+    let stop_id = args.stop_id.parse::<StopId>().map_err(|error| {
+        AppError::invalid(
+            "invalid_stop_id",
+            error.to_string(),
+            command::escape_text(&args.stop_id),
+            "raw HSL GTFS ID, for example HSL:1020453",
+        )
+    })?;
+    let request_id = context.request_ids.next();
+    let router = router(&context)?;
+    let result = await_provider(router.stop(&stop_id, language))?;
+    let Some(stop) = result.value else {
+        return Err(AppError::caller(
+            "stop_not_found",
+            format!(
+                "Stop '{}' was not found in the HSL dataset.",
+                command::escape_text(&args.stop_id)
+            ),
+        ));
+    };
+    let text = render_stop_detail(&stop, &result.source.attribution);
+    CommandOutput::success(
+        text,
+        json!({
+            "stop": stop,
+            "request": request_metadata(request_id, language, &context),
+            "source": result.source,
+        }),
+    )
+}
 
 pub fn execute_list(
     context: HandlerContext<'_>,
@@ -251,6 +288,64 @@ fn request_metadata(id: String, language: Language, context: &HandlerContext<'_>
     json!({"request_id":id,"language":language.code(),"timezone":context.config.timezone.0})
 }
 
+fn render_stop_detail(stop: &StopDetail, attribution: &str) -> String {
+    let modes = if stop.stop.modes.is_empty() {
+        "unknown".to_owned()
+    } else {
+        stop.stop
+            .modes
+            .iter()
+            .map(|mode| format!("{mode:?}").to_lowercase())
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let optional = |value: Option<&str>| {
+        value
+            .map(command::escape_text)
+            .unwrap_or_else(|| "unknown".to_owned())
+    };
+    let coordinates = stop
+        .stop
+        .coordinates
+        .map(|value| format!("{},{}", value.latitude, value.longitude))
+        .unwrap_or_else(|| "unknown".to_owned());
+    let parent = stop
+        .parent_station
+        .as_ref()
+        .map(|station| format!("{} ({})", command::escape_text(&station.name), station.id))
+        .unwrap_or_else(|| "none".to_owned());
+    [
+        format!(
+            "{} ({})",
+            command::escape_text(&stop.stop.name),
+            stop.stop.id
+        ),
+        format!(
+            "code: {} · platform: {} · zone: {}",
+            optional(stop.stop.code.as_deref()),
+            optional(stop.stop.platform.as_deref()),
+            optional(stop.zone.as_deref())
+        ),
+        format!(
+            "modes: {modes} · wheelchair: {}",
+            wheelchair_text(stop.stop.wheelchair_boarding)
+        ),
+        format!("coordinates: {coordinates}"),
+        format!("parent station: {parent}"),
+        format!("Reittiopas: {}", stop.stop.reittiopas_url),
+        command::escape_text(attribution),
+    ]
+    .join("\n")
+}
+
+fn wheelchair_text(value: reitti_core::WheelchairBoarding) -> &'static str {
+    match value {
+        reitti_core::WheelchairBoarding::Accessible => "accessible",
+        reitti_core::WheelchairBoarding::NotAccessible => "not_accessible",
+        reitti_core::WheelchairBoarding::Unknown => "unknown",
+    }
+}
+
 fn render_stops(stops: &[reitti_core::Stop], search: &Value, attribution: &str) -> String {
     let heading = if search["kind"] == "near" {
         format!("{} stops within {} m", stops.len(), search["radius_m"])
@@ -349,4 +444,4 @@ fn render_departures(
     lines.join("\n")
 }
 
-pub(crate) use schema::{departure_schema, stop_schema};
+pub(crate) use schema::{departure_schema, stop_detail_schema, stop_schema};

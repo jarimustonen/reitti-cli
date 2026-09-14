@@ -7,7 +7,7 @@
 - Journey limit: 1–6; location and stop limit: 1–10; departure limit: 1–50; alert limit: 1–100.
 - Datetimes must be RFC 3339 with `Z` or an explicit numeric offset.
 - Coordinates are latitude first: `60.1699,24.9384`, with no whitespace.
-- Raw stop and route IDs begin with `HSL:`. Journey endpoint refs add a type tag, for example `stop:HSL:1020453`.
+- Raw stop and route IDs begin with `HSL:`. `stop show`, departures, and alert filters use the raw ID; journey endpoint refs add a type tag, for example `stop:HSL:1020453`.
 
 Use `reitti <resource> <verb> --help --json` when exact flags are uncertain.
 
@@ -23,7 +23,15 @@ reitti --json journey list \
   --to coord:60.1776,24.6529 --limit 3
 ```
 
-For `invalid_datetime`, add the applicable offset; do not assume the user's timezone. For `invalid_stop_id`, remove `stop:` only when supplying the raw ID to `departure list` or a stop/route alert filter. For `provider_rate_limited` or another retryable provider error, respect a returned retry-after value and stop/report persistent errors or a deadline that makes retry pointless.
+For `invalid_datetime`, add the applicable offset; do not assume the user's timezone. For `invalid_stop_id`, remove `stop:` only when supplying the raw ID to `stop show`, `departure list`, or a stop/route alert filter. For `provider_rate_limited` or another retryable provider error, respect a returned retry-after value and stop/report persistent errors or a deadline that makes retry pointless.
+
+## Reading stop details
+
+```sh
+reitti --json stop show HSL:1020453
+```
+
+Use this bounded one-request lookup for one known stop. Preserve `zone`, `parent_station`, coordinates, accessibility, and modes exactly as returned: `null`, an empty mode list, or `unknown` means the CLI lacks verified evidence. `reittiopas_url` opens HSL's human-facing stop page. It is not an API and must not be scraped or treated as authority over the Digitransit response.
 
 ## Reading journey evidence
 

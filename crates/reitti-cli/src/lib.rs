@@ -128,6 +128,9 @@ pub fn run_with_transport(
         }
     };
 
+    if let Err(error) = preflight_before_output(&cli) {
+        return emit_error(&error, cli.json, stderr);
+    }
     let prepared = match prepare_output(cli.output.as_deref()) {
         Ok(prepared) => prepared,
         Err(error) => return emit_error(&error, cli.json, stderr),
@@ -154,6 +157,23 @@ pub fn run_with_transport(
     }
     let result = execute(cli, stdin, clock, &invocation_request_ids, transport);
     finish(result, json, prepared, stdout, stderr)
+}
+
+fn preflight_before_output(cli: &Cli) -> Result<(), AppError> {
+    if let Command::Stop {
+        command: StopCommand::Show(args),
+    } = &cli.command
+    {
+        args.stop_id.parse::<StopId>().map_err(|error| {
+            AppError::invalid(
+                "invalid_stop_id",
+                error.to_string(),
+                command::escape_text(&args.stop_id),
+                "raw HSL GTFS ID, for example HSL:1020453",
+            )
+        })?;
+    }
+    Ok(())
 }
 
 fn prepare_output(path: Option<&Path>) -> Result<Option<output::AtomicOutput>, AppError> {
@@ -223,6 +243,15 @@ fn execute(
             }
         },
         Command::Stop { command } => match command {
+            StopCommand::Show(args) => {
+                let config = require_credential(&overrides)?;
+                let language = config::resolve_language(args.language, &config)?;
+                handlers::stop::execute_show(
+                    handler_context(&config, clock, request_ids, transport),
+                    args,
+                    language,
+                )
+            }
             StopCommand::List(args) => {
                 if args.query.is_none() == args.near.is_none() {
                     return Err(AppError::caller(
@@ -867,6 +896,15 @@ fn examples(path: &[String]) -> Vec<Value> {
             "500",
             "--limit",
             "5",
+        ],
+        ["stop", "show"] => vec![
+            "reitti",
+            "--json",
+            "stop",
+            "show",
+            "HSL:1020453",
+            "--language",
+            "fi",
         ],
         ["departure", "list"] => vec![
             "reitti",

@@ -54,7 +54,7 @@ pub enum Command {
         #[command(subcommand)]
         command: JourneyCommand,
     },
-    /// Search stops.
+    /// Search or inspect stops.
     Stop {
         #[command(subcommand)]
         command: StopCommand,
@@ -142,6 +142,17 @@ pub struct JourneyListArgs {
 pub enum StopCommand {
     /// List named or nearby stops.
     List(StopListArgs),
+    /// Show bounded details for one raw HSL stop ID.
+    Show(StopShowArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct StopShowArgs {
+    /// Raw HSL GTFS stop ID; tagged stop:HSL: references are rejected.
+    #[arg(value_name = "STOP_ID")]
+    pub stop_id: String,
+    #[arg(long, value_enum)]
+    pub language: Option<LanguageArg>,
 }
 
 #[derive(Debug, Args)]

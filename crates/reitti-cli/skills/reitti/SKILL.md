@@ -20,6 +20,14 @@ reitti --json stop list --near 60.1699,24.9384 --radius-m 500 --limit 5
 
 Journey endpoints accept only `query:`, `place:`, `stop:`, or `coord:` references. If `query:` produces `location_ambiguous`, present plausible candidates and retry with a returned `place:` or `stop:` ref only after the user or existing context supplies enough evidence to select it.
 
+Inspect a known stop with its raw ID when the user needs its code, platform, zone, parent station, coordinates, accessibility evidence, or human-facing page:
+
+```sh
+reitti --json stop show HSL:1020453
+```
+
+Treat the returned stop fields as Digitransit facts. `reittiopas_url` is a verified link to HSL's human route-planner view, not another machine data source; do not scrape it or infer facts from it. Preserve nullable fields and `unknown` values.
+
 ## Plan and compare
 
 Omit time flags to plan from now. Use `--depart-at` for a departure constraint or `--arrive-by` for a deadline; never pass both. Use the user's actual travel date and offset. This timestamp is illustrative:
@@ -39,7 +47,7 @@ Compare every returned alternative using its times, duration, transfers, walking
 
 ## Check live context
 
-Use a raw HSL stop ID, without the `stop:` prefix, for departures:
+Use a raw HSL stop ID, without the `stop:` prefix, for stop details and departures:
 
 ```sh
 reitti --json departure list --stop HSL:1020453 --window 2h --limit 10

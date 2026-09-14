@@ -1,0 +1,24 @@
+{
+  "case": "ordinary stop detail with nullable parent",
+  "fixture_schema_version": 1,
+  "response": {
+    "body": {
+      "data": {
+        "stop": {
+          "gtfsId": "HSL:1020453",
+          "name": "Päärautatieasema",
+          "code": "H0301",
+          "platformCode": "41",
+          "lat": 60.170347,
+          "lon": 24.941008,
+          "vehicleMode": "RAIL",
+          "wheelchairBoarding": "POSSIBLE",
+          "zoneId": "A",
+          "parentStation": null
+        }
+      }
+    },
+    "status": 200
+  },
+  "retrieved_at": "2026-09-14T14:00:00Z"
+}

@@ -146,6 +146,10 @@ fn live_context_handlers_are_bounded_truthful_and_schema_valid() {
     let stop = validate_schema("stop-list", &stdout);
     assert_eq!(stop["data"]["stops"][0]["platform"], "3");
     assert_eq!(stop["data"]["stops"][0]["ref"], "stop:HSL:1020453");
+    assert_eq!(
+        stop["data"]["stops"][0]["reittiopas_url"],
+        "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"
+    );
     assert_eq!(transport.request_count(), 1);
 
     let (exit, stdout, stderr) = invoke(
@@ -166,6 +170,10 @@ fn live_context_handlers_are_bounded_truthful_and_schema_valid() {
     assert_eq!(exit, 0, "{stderr}");
     let departure = validate_schema("departure-list", &stdout);
     assert_eq!(departure["data"]["window_seconds"], 7200);
+    assert_eq!(
+        departure["data"]["stop"]["reittiopas_url"],
+        "https://reittiopas.hsl.fi/pysakit/HSL%3A1020453"
+    );
     assert_eq!(
         departure["data"]["departures"][0]["departure"]["observed_realtime"],
         false
