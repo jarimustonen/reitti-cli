@@ -3,7 +3,7 @@ created: 2026-09-09
 updated: 2026-09-14
 type: feature
 reporter: jarimustonen
-status: open
+status: in-progress
 priority: normal
 lane: cli-surface
 lane_seq: 10
