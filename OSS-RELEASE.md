@@ -37,7 +37,7 @@ docs_site: none
 - **Ecosystem: Rust** — the workspace contains `reitti-core` and the `reitti` binary package (`reitti-cli`).
 - **Release targets** — publish `reitti-core` then `reitti-cli` to crates.io, retain `reitti-cli` GitHub Release archive names, and distribute command `reitti` through `jarimustonen/homebrew-reitti`. The maintainer explicitly authorized these channels and public repository visibility on 2026-09-08.
 - **Distribution: cargo-dist via GitHub Releases** — future releases provide binaries for macOS arm64 and Linux arm64/x86_64 plus a shell installer. Intel macOS and Windows are intentionally unsupported.
-- **Versioning and release: SemVer, gated, single** — the first intended stable release is v1.0. A maintainer explicitly initiates every release; this contract does not authorize automatic publication.
+- **Versioning and release: SemVer, gated, single** — the first stable release was v1.0. After an explicit stint and terminal handoff, the maintainer's standing policy authorizes the agent to initiate a release when the reservation-aware issue DAG is completely empty. Publication remains gated by every release-readiness, security, distribution, and verification check.
 - **Changelog: curated from issuectl trailers** — maintainers select user-facing entries from the repository's issue-linked commits.
 - **Provenance: keyless** — the public v1.0.0 release produced verified GitHub artifact attestations for all three binary archives. Checksums and the binary's exact source commit remain required evidence for every release.
 - **License: MIT** — the workspace manifest declares MIT, matching the planned public license in `README.md`.
@@ -46,7 +46,7 @@ docs_site: none
 ## Release notes
 
 - Repository visibility remains the maintainer's decision. This contract does not change GitHub settings.
-- The maintainer authorized the first v1.0.0 publication after final README and packaging checks. Subsequent releases require their own maintainer instruction.
+- The maintainer authorized the first v1.0.0 publication after final README and packaging checks. On 2026-09-14 the maintainer additionally authorized autonomous release decisions after an explicit stint and handoff whenever the reservation-aware issue DAG is completely empty; no separate per-release confirmation is then required.
 - A v1.0 cut requires the generated cargo-dist configuration and tag-triggered release workflow, final release notes, clean-machine installation, three-platform artifact smoke tests, authenticated provider acceptance, and inspection of the actual release-workflow result.
 - Do not regenerate ordinary push or pull-request CI merely to satisfy a release-readiness audit. The required merge gates and secret scan run locally; the generated cargo-dist release workflow remains.
 - GitHub Release assets and pushed tags are durable release actions; review the release plan before cutting them.

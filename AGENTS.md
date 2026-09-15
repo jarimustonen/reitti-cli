@@ -34,11 +34,31 @@ Add relevant deterministic integration tests for CLI contracts and provider fail
 Live smoke tests are deliberate, bounded checks with credentials supplied through
 the environment; never print credentials or store them in arguments or fixtures.
 
-This is a library and CLI project with no service deployment step. The current
-authorized work includes CLI design, implementation, onboarding, documentation,
-and OSS release preparation. The maintainer has authorized public GitHub visibility and the v1.0.0 release
-on crates.io, GitHub Releases, and the project Homebrew tap. Release readiness must be supported by
-working installation and smoke tests, not only the presence of release documents.
+This is a library and CLI project with no service deployment step. Here,
+"deploy" means publishing a versioned CLI release to the approved crates.io,
+GitHub Releases, and project Homebrew-tap channels. The current authorized work
+includes CLI design, implementation, onboarding, documentation, OSS release
+preparation, and release publication under the autonomy rule below. Release
+readiness must be supported by working installation and smoke tests, not only
+the presence of release documents.
+
+### Release/deploy autonomy at stint completion
+
+After an explicit stint has completed and `/stint-handoff` has finished, the
+agent may autonomously decide whether the landed changes warrant a release and,
+if so, publish it without another confirmation when the reservation-aware
+`issuectl dag --json --reservations ...` result is completely empty
+(`lanes: []`, `unscheduled: []`, and `spawnable_heads: 0`). This is standing
+maintainer authorization for future releases, not only v1.0.0.
+
+An empty DAG authorizes the release decision; it does not waive safety gates.
+Release only from a clean, pushed `main` after the repository gates, release-time
+Gitleaks scan, SemVer/changelog preparation, distribution checks, bounded live
+smoke tests, and all target-specific publication verification pass. Preserve the
+approved release channels and macOS runner policy. A non-empty or unverifiable
+DAG, unresolved decision, failed check, or ambiguous publication state blocks
+autonomous release. `/stint-handoff` itself never deploys; deployment is the
+separate next action after the terminal handoff.
 
 ### Review judgment
 
