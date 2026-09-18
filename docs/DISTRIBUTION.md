@@ -7,7 +7,7 @@ Releases publish `reitti-core` and `reitti-cli` to crates.io, prebuilt binaries 
 
 `dist-workspace.toml` and `.github/workflows/release.yml` are generated from the approved `OSS-RELEASE.md` distribution contract. Refresh the configuration with `shipshape dist generate`, retain the Homebrew installer, tap and publish-job settings plus the maintainer-required macOS runner override if the shipshape generator omits them, and regenerate the workflow with the pinned cargo-dist. Never hand-edit `release.yml`.
 
-The repository pins cargo-dist 0.28.2. Its release plan creates:
+The repository pins cargo-dist 0.33.0. Its release plan creates:
 
 - `reitti-cli-aarch64-apple-darwin.tar.xz` and checksum;
 - `reitti-cli-aarch64-unknown-linux-musl.tar.xz` and checksum;
@@ -55,7 +55,7 @@ After changing `distribution` in `OSS-RELEASE.md`:
 1. run `shipshape dist generate --require-approved` with the checksum-verified pinned cargo-dist on `PATH`;
 2. retain `installers = ["shell", "homebrew"]`, `tap = "jarimustonen/homebrew-reitti"`, `publish-jobs = ["homebrew"]`, `github-build-setup = "../build-setup.yml"`, and `[dist.github-custom-runners]` with `aarch64-apple-darwin = "self-hosted"`;
 3. run cargo-dist `generate` again and verify there is no generated diff on a second run;
-4. inspect `dist plan --output-format=json` and read artifact paths from its JSON (`target/distrib` in cargo-dist 0.28.2);
+4. inspect `dist plan --output-format=json` and read artifact paths from its JSON (`target/distrib` in cargo-dist 0.33.0);
 5. verify all three target archives, the shell installer, aggregate and per-file checksums, source archive, and exact build commit;
 6. smoke-test every executable and the shell installer's platform selection in disposable homes; and
 7. inspect the actual tag-triggered GitHub release workflow before claiming release jobs or attestations passed.
