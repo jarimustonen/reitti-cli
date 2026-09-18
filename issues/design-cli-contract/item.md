@@ -42,7 +42,7 @@ The normative implementation contract is in [`design.md`](design.md).
 - [x] Secure XDG configuration specifies per-key precedence and credential onboarding without secrets in argv, output, logs, fixtures, or examples.
 - [x] Structured help and copy-pasteable examples are specified for every v1 command, together with doctor and the synchronized Claude/pi/Codex companion-skill surface.
 - [x] Core/client/CLI seams and deterministic unit, fixture-contract, golden, mock-server, skill, and end-to-end tests are implementable without redesign.
-- [x] The design preserves the verified Routing v2 HSL GTFS behavior and records applicability decisions for all sections of `AGENTS-AI-FIRST-CLI.md`.
+- [x] The design preserves the verified Routing v2 HSL GTFS behavior and records applicability decisions for all sections of the AI-first CLI canon provided by the `/ai-first-cli-canon` skill.
 
 ## Resolution
 

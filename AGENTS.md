@@ -4,7 +4,7 @@ Agent-first command-line journey planner for Helsinki, Espoo, Vantaa, Kauniainen
 
 ## CLI Design Principles
 
-This project follows the AI-first CLI conventions in [`AGENTS-AI-FIRST-CLI.md`](AGENTS-AI-FIRST-CLI.md) — strict input validation, `--json` output, JSONL logs, no interactive prompts, informative errors, composable commands. Read that file before designing or changing CLI surface. The file is a verbatim copy from `project-canon`; treat it as shared canon, not a project-local doc to edit.
+This project follows the AI-first CLI conventions — strict input validation, `--json` output, JSONL logs, no interactive prompts, informative errors, and composable commands. Use the `/ai-first-cli-canon` skill installed by `project-canon skill install` whenever designing or changing CLI surface. The installed, versioned skill is authoritative; do not maintain a repo-local canon copy.
 
 ## Gitignored directories
 
