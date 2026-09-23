@@ -63,7 +63,7 @@ fn equivalent_version_spellings_are_byte_identical() {
             )),
         }
         assert_eq!(value["data"]["skills"][0]["name"], "reitti");
-        assert_eq!(value["data"]["skills"][0]["cli_version"], "1.0.0");
+        assert_eq!(value["data"]["skills"][0]["cli_version"], "1.1.0");
         assert_eq!(value["data"]["skills"][0]["schema_version"], 1);
     }
     for output in &outputs[1..] {
@@ -106,7 +106,7 @@ fn support_commands_have_stable_text_surfaces() {
     let alias = run(home.path(), &["--version"]);
     assert!(version.status.success());
     assert_eq!(version.stdout, alias.stdout);
-    assert!(String::from_utf8_lossy(&version.stdout).starts_with("reitti 1.0.0 ("));
+    assert!(String::from_utf8_lossy(&version.stdout).starts_with("reitti 1.1.0 ("));
 
     let path = run(home.path(), &["config", "path"]);
     assert!(path.status.success());

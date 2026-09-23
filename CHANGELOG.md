@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- oss-changelog:unreleased-start -->
+## [Unreleased]
+
+### Added
+### Changed
+### Fixed
+<!-- oss-changelog:unreleased-end -->
+
+## [1.1.0] - 2026-09-23
+
+### Added
+
+- Added bounded `reitti stop show <STOP_ID>` details, including the fare zone, nullable parent station, and a Reittiopas URL for human follow-up.
+- Added the same Reittiopas URL to stop-search results and departure-board stop objects.
+
+### Changed
+
+- Running `reitti` without arguments now prints readable help to standard output and exits successfully.
+
+### Fixed
+
+- Missing Digitransit credentials now point to the bundled configuration guidance.
+
 ## [1.0.0] - 2026-09-08
 
 First stable release.
@@ -29,4 +51,7 @@ First stable release.
 ### Fixed
 
 - Verbose invocation events and command results now share one request ID, allowing direct log-to-result correlation.
-<!-- oss-changelog:unreleased-end -->
+
+[Unreleased]: https://github.com/jarimustonen/reitti-cli/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/jarimustonen/reitti-cli/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/jarimustonen/reitti-cli/releases/tag/v1.0.0
