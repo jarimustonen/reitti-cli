@@ -17,7 +17,7 @@ Journey endpoints take a typed reference: `query:<free text>`, `place:<id>`, `st
 
 ## Resolving places
 
-A `query:` endpoint is resolved conservatively. The CLI accepts it only when the geocoder returns exactly one concrete address, venue, or stop with high confidence; anything else fails with `location_ambiguous`, and the error carries the candidates together with their stable `place:` or `stop:` references in `retry_refs`. This is by design: "Kamppi" is a metro station, a bus terminal, a district, and several venues, and silently picking one would produce a confident plan to the wrong place. When the conversation already makes clear which candidate is meant, choose it, say what you chose, and continue. When the candidates differ in a way the user would care about and nothing in the context settles it, that is worth a question.
+A `query:` endpoint is resolved conservatively. The CLI accepts it only when the geocoder returns exactly one concrete address, venue, or stop with high confidence; no match at all fails with `location_not_found`, and anything else fails with `location_ambiguous`, whose error carries the candidates together with their stable `place:` or `stop:` references in `retry_refs`. This is by design: "Kamppi" is a metro station, a bus terminal, a district, and several venues, and silently picking one would produce a confident plan to the wrong place. When the conversation already makes clear which candidate is meant, choose it, say what you chose, and continue. When the candidates differ in a way the user would care about and nothing in the context settles it, that is worth a question.
 
 You can also look before you plan:
 
