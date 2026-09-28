@@ -1,11 +1,17 @@
 # Documentation guidance
 
-Documentation in this directory is public, user-facing material unless it explicitly identifies itself as maintainer release operations.
+Everything in this directory is published with the repository and read by people who install `reitti` from crates.io, GitHub Releases, or the Homebrew tap. `DISTRIBUTION.md` is the exception: it is the maintainer's release runbook, and it says so at the top. Write the rest for a reader who has never seen this repository and cannot ask a question.
 
-- Verify every CLI example against the current `reitti` binary and its structured help.
-- Never include real subscription keys, private machine names, local home paths, ignored build caches, or unpublished artifact claims.
-- Keep API registration and rotation in `digitransit-api-access.md`, runtime precedence and safe setup in `configuration.md`, and release mechanics in `DISTRIBUTION.md`.
-- Describe Digitransit and HSL attribution accurately and state that reitti-cli is independent.
-- Treat fixed future timestamps as illustrative and tell users to supply their actual travel date and UTC offset.
-- Preserve the distinction between direct preflight builds, final artifacts, tag-triggered GitHub release-workflow evidence, and published releases.
-- Ordinary push and pull-request CI is intentionally absent by maintainer decision; do not describe it as planned or regenerate it to satisfy an audit.
+Each file has one subject, so a reader following a link from the README lands on a complete answer. `digitransit-api-access.md` covers registering for a Digitransit subscription and rotating keys. `configuration.md` covers where `reitti` reads its settings, how flag, environment, file, and default values take precedence, and how to store the key without exposing it. `DISTRIBUTION.md` covers how releases are built, verified, and published. When a topic seems to belong in two places, put it in one and link from the other; duplicated guidance drifted apart before and left contradictory advice.
+
+The CLI is the source of truth for its own surface. Its `--help` and `reitti --json schema show <command>` describe the current commands, flags, and response shapes, and the README says so. An example in these files that no longer matches the built binary teaches the reader a command that fails, so run each example against the current build before you rely on it, and prefer pointing at help output over paraphrasing it.
+
+Two things are easy to get wrong in examples. Timestamps for `--depart-at` and `--arrive-by` must be RFC 3339 with an explicit offset, and the service area's offset changes with daylight saving. A fixed date in an example is illustrative only. Say so, and tell the reader to use their real travel date with its offset, so nobody copies a stale example into a plan. The other is Digitransit's subscription key: it is a real credential. The docs already explain how to keep it out of argv, shell history, and repository files. Examples use placeholders, never a working key.
+
+The published artifacts are meant to reveal nothing about the machine that built them. Release builds remap the maintainer's home directory and source path to neutral prefixes, and `doctor` checks bundled text for configured private markers. That effort is wasted if the documentation names a private machine, a local home path, or an ignored build cache. Keep such details out even when they would make an example more concrete.
+
+Reitti is an independent project that uses Digitransit's open data, which is the service behind HSL's journey planner. It is not affiliated with or endorsed by HSL or Digitransit, upstream data keeps its own licensing and attribution terms, and the MIT license covers only this software. The README's attribution section states this; keep other documents consistent with it rather than restating it loosely.
+
+Release documentation describes several distinct kinds of evidence, and the words matter. A direct preflight build on the maintainer's machine, a final artifact from cargo-dist, a tag-triggered GitHub release-workflow run, and a published release with assets on the release page are four different things. Local checks do not prove a release ran, and a plan is not a publication. Describe each as what it is, and do not claim an artifact, attestation, or release exists until the publication has been inspected.
+
+There is no push or pull-request CI, and this is the maintainer's decision, not an omission. The self-hosted macOS runner used for release builds is reserved for trusted tag-triggered work, and the repository gates run locally as described in the root `AGENTS.md`. Documentation describes this arrangement as intended and does not present ordinary CI as planned or missing.
