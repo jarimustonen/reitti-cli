@@ -69,9 +69,10 @@ Digitransit fixtures under `tests/fixtures/digitransit` are complete, carry the
 expected schema version, and contain neither the secret header name in a URL
 nor the currently exported key. Its `live` mode re-records the fixtures against
 the real API and needs the key in the environment. The provider tests in
-`crates/reitti-cli/tests` run against those fixtures, so provider failures and
-CLI contracts can be tested deterministically without credentials; add such a
-test when you change either.
+`crates/reitti-cli/src/digitransit/tests.rs` and `crates/reitti-cli/tests` run
+against those fixtures or canned responses through a fixture transport, so
+provider failures and CLI contracts can be tested deterministically without
+credentials; add such a test when you change either.
 
 Before a release, scan the whole tracked history for leaked secrets:
 
@@ -134,8 +135,10 @@ is built on the maintainer's self-hosted ARM64 runner, the same machine the
 other family projects use, and `dist-workspace.toml` carries that as a
 `[dist.github-custom-runners]` override for `aarch64-apple-darwin`.
 `shipshape dist generate` deliberately omits personal runner overrides, so
-regenerating the distribution configuration drops it; put it back and rerun
-cargo-dist's `generate` so the release workflow reflects it. Replacing the
-runner with a hosted macOS runner would change a decision the maintainer has
-made explicitly. The release workflow itself is generated output, not a file to
-edit by hand.
+regenerating the distribution configuration drops it, along with the Homebrew
+installer, `tap`, `publish-jobs`, and `github-build-setup` settings this
+repository relies on; put them back as `docs/DISTRIBUTION.md` lists them and
+rerun cargo-dist's `generate` so the release workflow reflects them. Replacing
+the runner with a hosted macOS runner would change a decision the maintainer
+has made explicitly. The release workflow itself is generated output, not a
+file to edit by hand.
