@@ -26,10 +26,12 @@ status the scheduling DAG misreads. The same applies to moving or renaming
 an issue directory: `issuectl rename` rewrites every reference to the slug,
 a manual `mv` leaves them dangling.
 
-Body prose is different. Nothing is derived from sections other than the
-generated `## Comments`, `## Decisions`, and `## Agent Runs`, so editing the
-rest of the body by hand or through `issuectl body` is fine. Planning
-documents (`plan.md`, `analysis.md`, `validation.md`, `design.md`,
+Body prose is different. The tool appends timestamped blocks only to
+`## Comments`, `## Decisions`, `## Agent Runs`, and the `## Resolution` that
+`close --comment` writes, so editing the rest of the body by hand or through
+`issuectl body` is fine. `issuectl ready` counts the checkboxes under
+`## Acceptance Criteria` and `## Tests Run`, so keep those as task lists.
+Planning documents (`plan.md`, `analysis.md`, `validation.md`, `design.md`,
 `breakdown.md`, `todo.md`) live in the issue directory next to `item.md`,
 which is why an issue directory is more than its frontmatter.
 
@@ -64,8 +66,9 @@ block summarizes, and it is meant to be edited. Its comments say why each
 edge exists: an in-flight issue does not drop back to `untriaged`, because
 that would silently un-work it, and an untriaged or parked item is
 dispositioned through `issuectl intake`, never quietly marked `done` or
-`fixed`. An illegal status change fails with the `transition-illegal` error
-code and exit 1, and the message names the allowed sources. The answer is
+`fixed`. An illegal status change fails, and the message names the allowed
+sources; with `--json` the error carries the `transition-illegal` code and
+exits 2, and plain output exits 1. The answer is
 usually to go through the intermediate state or the intake command the rule
 points at, not to loosen the rule. `note` and `check` report the same
 mismatch only as a warning and still write, so a hard error reliably comes
